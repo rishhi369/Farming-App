@@ -74,13 +74,6 @@ import com.project.farmingapp.view.weather.WeatherFragment
 import com.project.farmingapp.viewmodel.UserDataViewModel
 import com.project.farmingapp.viewmodel.UserProfilePostsViewModel
 import com.project.farmingapp.viewmodel.WeatherViewModel
-import com.squareup.picasso.Picasso
-import com.squareup.picasso.PicassoProvider
-import org.w3c.dom.Document
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
 import java.util.*
 import kotlin.collections.ArrayList
 

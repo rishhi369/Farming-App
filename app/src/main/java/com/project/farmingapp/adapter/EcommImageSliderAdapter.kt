@@ -3,7 +3,7 @@ package com.project.farmingapp.adapter
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
-import com.squareup.picasso.Picasso
+import com.bumptech.glide.Glide
 
 class EcommImageSliderAdapter(
     private val imageUrls: List<String>
@@ -23,9 +23,8 @@ class EcommImageSliderAdapter(
     }
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
-        Picasso.get()
+        Glide.with(holder.imageView.context)
             .load(imageUrls[position])
-            .fit()
             .centerCrop()
             .into(holder.imageView)
     }
