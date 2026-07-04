@@ -29,7 +29,7 @@ class WeatherViewModel : ViewModel() {
     val rootData2: LiveData<WeatherRootList> = _rootData1
 
 
-    var newDataTrial = MutableLiveData<WeatherRootList>()
+    var newDataTrial = MutableLiveData<WeatherRootList?>()
 
 
     fun messageToB(msg: WeatherRootList){

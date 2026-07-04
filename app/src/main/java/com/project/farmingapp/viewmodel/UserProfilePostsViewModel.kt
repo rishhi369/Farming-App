@@ -11,7 +11,7 @@ lateinit var userProfilePostsLiveData : MutableLiveData<List<DocumentSnapshot>>
 class UserProfilePostsViewModel : ViewModel() {
 
     val userProfilePostsLiveData = MutableLiveData<ArrayList<HashMap<String, Any>>>()
-    val userProfilePostsLiveData2 = MutableLiveData<List<String>>()
+    val userProfilePostsLiveData2 = MutableLiveData<List<String>?>()
 
     val liveData1 = MutableLiveData<List<String>>()
     val liveData2 = MutableLiveData<ArrayList<DocumentSnapshot>>()
