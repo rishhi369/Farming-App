@@ -56,6 +56,11 @@ android {
         dataBinding true
         viewBinding true
     }
+
+    aaptOptions {
+        cruncherEnabled = false
+        useNewCruncher = false
+    }
 }
 
 dependencies {
