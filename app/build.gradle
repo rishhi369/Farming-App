@@ -32,6 +32,17 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Load secrets
+        def secretsFile = rootProject.file("secrets.properties")
+        def secrets = new Properties()
+        if (secretsFile.exists()) {
+            secrets.load(new FileInputStream(secretsFile))
+        }
+
+        manifestPlaceholders = [
+                razorpayKey: secrets.getProperty("RAZORPAY_KEY", "")
+        ]
     }
 
     buildTypes {

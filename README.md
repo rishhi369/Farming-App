@@ -29,6 +29,40 @@ The application is also designed in such a way that it will be easy to use.
 ## 🤩 Designs:
 
 
+## 🚀 Getting Started
+
+To get a local copy up and running, follow these simple steps:
+
+### Prerequisites
+* Android Studio (Latest Version)
+* JDK 17
+* Firebase Account
+
+### Installation & Setup
+
+1. **Clone the repository**
+   ```sh
+   git clone https://github.com/rishhi369/Farming-App.git
+   ```
+
+2. **Firebase Setup**
+   * Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/).
+   * Add an Android App with package name `com.project.farmingapp`.
+   * Download `google-services.json` and place it in the `app/` directory.
+   * Enable **Email/Google Authentication**, **Firestore**, and **Storage**.
+
+3. **API Keys & Secrets**
+   * Create a file named `secrets.properties` in the root directory.
+   * Add your Razorpay Key:
+     ```properties
+     RAZORPAY_KEY=your_razorpay_key_here
+     ```
+
+4. **Build the Project**
+   * Open the project in Android Studio.
+   * Let Gradle sync and build.
+   * Run the app on an emulator or physical device.
+
 ## 👨‍💻 Maintainer:
 **Dipak Bachhav**
 
