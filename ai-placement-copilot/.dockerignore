@@ -1,0 +1,13 @@
+.git
+node_modules
+apps/web/.next
+apps/web/node_modules
+services/api/.venv
+services/api/__pycache__
+services/api/.pytest_cache
+storage
+chroma
+uploads
+.env
+*.log
+

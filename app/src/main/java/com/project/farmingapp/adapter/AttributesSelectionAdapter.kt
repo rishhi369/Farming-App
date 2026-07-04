@@ -39,18 +39,18 @@ class AttributesSelectionAdapter(var context: Context, var allData: List<Map<Str
             cellClickListener.onCellClickListener("1 ${key}")
 
             holder.itemView.attributeTitle.text = key
-            var allValues = values as ArrayList<String>
-            var currentValue = allValues[0].toString().split(" ")
-            holder.itemView.attribute1.text = currentValue[0].toString()
-            holder.itemView.attribute1Price.text = currentValue[1].toString()
+            val allValues = values as? List<String> ?: emptyList()
+            val firstValue = allValues.getOrNull(0).orEmpty().split(" ")
+            holder.itemView.attribute1.text = firstValue.getOrNull(0).orEmpty()
+            holder.itemView.attribute1Price.text = firstValue.getOrNull(1).orEmpty()
 
-            currentValue = allValues[1].toString().split(" ")
-            holder.itemView.attribute2.text = currentValue[0].toString()
-            holder.itemView.attribute2Price.text = currentValue[1].toString()
+            val secondValue = allValues.getOrNull(1).orEmpty().split(" ")
+            holder.itemView.attribute2.text = secondValue.getOrNull(0).orEmpty()
+            holder.itemView.attribute2Price.text = secondValue.getOrNull(1).orEmpty()
 
-            currentValue = allValues[2].toString().split(" ")
-            holder.itemView.attribute3.text = currentValue[0].toString()
-            holder.itemView.attribute3Price.text = currentValue[1].toString()
+            val thirdValue = allValues.getOrNull(2).orEmpty().split(" ")
+            holder.itemView.attribute3.text = thirdValue.getOrNull(0).orEmpty()
+            holder.itemView.attribute3Price.text = thirdValue.getOrNull(1).orEmpty()
 
 //            holder.itemView.attribute1.text = currentValue[0].toString()
 //            holder.itemView.attribute1Price.text = currentValue[1].toString()

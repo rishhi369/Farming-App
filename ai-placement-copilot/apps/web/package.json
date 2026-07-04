@@ -1,0 +1,43 @@
+{
+  "name": "@placement-copilot/web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.31.0",
+    "@monaco-editor/react": "^4.7.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.468.0",
+    "next": "^15.5.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-dropzone": "^14.3.8",
+    "recharts": "^3.1.2",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.34.0",
+    "eslint-config-next": "^15.5.6",
+    "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.2"
+  }
+}
+

@@ -41,20 +41,20 @@ class WeatherAdapter(val context: Context, val weatherrootdatas: List<WeatherLis
         val inputFormat = SimpleDateFormat("yyyy-MM-dd")
         val outputFormat = SimpleDateFormat("dd/MM/yyyy")
 
-        val date: Date = inputFormat.parse(weathernew.dt_txt.slice(0..9))
-        val outputDate = outputFormat.format(date)
+        val parsedDate = inputFormat.parse(weathernew.dt_txt.take(10))
+        val outputDate = parsedDate?.let { outputFormat.format(it) } ?: weathernew.dt_txt.take(10)
 
         Log.d("New Date", outputDate.toString())
 
-        val we = weathernew.weather[0]
+        val we = weathernew.weather.firstOrNull()
         val we2 = weathernew.main
         holder.wedate.text = outputDate
-        holder.wedesc.text = we.description.capitalize()
+        holder.wedesc.text = we?.description?.replaceFirstChar { it.uppercase() } ?: "-"
         Log.d("weatherTemp", we2.temp.toString())
         val Temp = we2.temp - 273.15
         holder.wemain.text = Temp.toInt().toString() + "\u2103"
 
-        var iconcode = weathernew.weather[0].icon.toString()
+        var iconcode = we?.icon.orEmpty()
 
         var iconurl = "https://openweathermap.org/img/w/" + iconcode + ".png";
         Log.d("weatherlogo", iconcode.toString())

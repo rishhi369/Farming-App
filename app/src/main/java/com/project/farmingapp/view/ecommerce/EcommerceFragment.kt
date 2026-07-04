@@ -69,9 +69,9 @@ class EcommerceFragment : Fragment(), CellClickListener {
             .get<EcommViewModel>(EcommViewModel::class.java)
 
         viewmodel.ecommLiveData.observe(viewLifecycleOwner, Observer {
-            adapter = EcommerceAdapter(activity!!.applicationContext, it, this)
+            adapter = EcommerceAdapter(requireContext(), it, this)
             ecommrcyclr.adapter = adapter
-            ecommrcyclr.layoutManager = LinearLayoutManager(activity!!.applicationContext)
+            ecommrcyclr.layoutManager = LinearLayoutManager(requireContext())
         })
 
         return inflater.inflate(R.layout.fragment_ecommerce, container, false)
@@ -93,14 +93,14 @@ class EcommerceFragment : Fragment(), CellClickListener {
                 R.id.chip1 -> {
                     viewmodel.loadAllEcommItems().observe(viewLifecycleOwner, Observer {
                         ecommrcyclr.adapter =
-                            EcommerceAdapter(activity!!.applicationContext, it, this)
+                            EcommerceAdapter(requireContext(), it, this)
                     })
                 }
                 R.id.chip2 -> {
                     viewmodel.getSpecificCategoryItems("fertilizer")
                         .observe(viewLifecycleOwner, Observer {
                             ecommrcyclr.adapter =
-                                EcommerceAdapter(activity!!.applicationContext, it, this)
+                                EcommerceAdapter(requireContext(), it, this)
                         })
                 }
 
@@ -108,15 +108,31 @@ class EcommerceFragment : Fragment(), CellClickListener {
                     viewmodel.getSpecificCategoryItems("pestiside")
                         .observe(viewLifecycleOwner, Observer {
                             ecommrcyclr.adapter =
-                                EcommerceAdapter(activity!!.applicationContext, it, this)
+                                EcommerceAdapter(requireContext(), it, this)
                         })
                 }
 
                 R.id.chip4 -> {
-                    viewmodel.getSpecificCategoryItems("machine")
+                    viewmodel.getSpecificCategoryItems("irrigation")
                         .observe(viewLifecycleOwner, Observer {
                             ecommrcyclr.adapter =
-                                EcommerceAdapter(activity!!.applicationContext, it, this)
+                                EcommerceAdapter(requireContext(), it, this)
+                        })
+                }
+
+                R.id.chip5 -> {
+                    viewmodel.getSpecificCategoryItems("seed")
+                        .observe(viewLifecycleOwner, Observer {
+                            ecommrcyclr.adapter =
+                                EcommerceAdapter(requireContext(), it, this)
+                        })
+                }
+
+                R.id.chip6 -> {
+                    viewmodel.getSpecificCategoryItems("grapes")
+                        .observe(viewLifecycleOwner, Observer {
+                            ecommrcyclr.adapter =
+                                EcommerceAdapter(requireContext(), it, this)
                         })
                 }
             }
@@ -149,7 +165,7 @@ class EcommerceFragment : Fragment(), CellClickListener {
         bundle.putString("name", name)
         ecommerceItemFragment.setArguments(bundle)
 
-        val transaction = activity!!.supportFragmentManager
+        val transaction = parentFragmentManager
             .beginTransaction()
             .replace(R.id.frame_layout, ecommerceItemFragment, name)
             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
@@ -170,7 +186,7 @@ class EcommerceFragment : Fragment(), CellClickListener {
         when (item.itemId) {
             R.id.cart_item -> {
                 val cartFragment = CartFragment()
-                val transaction = activity!!.supportFragmentManager
+                val transaction = parentFragmentManager
                     .beginTransaction()
                     .replace(R.id.frame_layout, cartFragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)

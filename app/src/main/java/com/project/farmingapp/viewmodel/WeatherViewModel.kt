@@ -58,6 +58,7 @@ class WeatherViewModel : ViewModel() {
 
     fun updateCoordinates(coords: List<String>){
         coordinates.value = coords
+        newDataTrial.value = null
         Log.d("WeatherView", coordinates.value.toString())
     }
 
@@ -75,22 +76,20 @@ class WeatherViewModel : ViewModel() {
         Log.d("Weather Long", "${coordinates.value?.get(1)}")
         Log.d("Weather City", "${coordinates.value?.get(2)}")
 
-        if (newDataTrial.value == null) {
-            response.enqueue(object : Callback<WeatherRootList> {
-                override fun onFailure(call: Call<WeatherRootList>, t: Throwable) {
-                    Log.d("WeatherRepository", "Error Occured")
-                }
+        response.enqueue(object : Callback<WeatherRootList> {
+            override fun onFailure(call: Call<WeatherRootList>, t: Throwable) {
+                Log.d("WeatherRepository", "Error Occured")
+            }
 
-                override fun onResponse(
-                    call: Call<WeatherRootList>,
-                    response: Response<WeatherRootList>
-                ) {
-                    if (response.isSuccessful) {
-                        newDataTrial.value = response.body()
-                    }
+            override fun onResponse(
+                call: Call<WeatherRootList>,
+                response: Response<WeatherRootList>
+            ) {
+                if (response.isSuccessful) {
+                    newDataTrial.value = response.body()
                 }
             }
-            )
         }
+        )
     }
 }

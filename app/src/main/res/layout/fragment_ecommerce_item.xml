@@ -49,17 +49,11 @@
             app:layout_constraintTop_toTopOf="parent"
             android:elevation="0dp"
             android:layout_height="wrap_content">
-        <com.asura.library.views.PosterSlider
+        <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/poster_slider"
             android:layout_width="match_parent"
             android:layout_height="220dp"
-            android:background="@color/secondary3"
-
-            app:defaultIndicator="circle"
-            app:hideIndicators="true"
-            app:imageSlideInterval="5000"
-
-            app:loopSlides="true" />
+            android:background="@color/secondary3" />
         </LinearLayout>
 
         <androidx.core.widget.NestedScrollView

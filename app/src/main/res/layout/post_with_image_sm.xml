@@ -84,6 +84,21 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/userProfileImageCard" />
 
+    <TextView
+        android:id="@+id/userPostCategorySM"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:background="@drawable/edit_back"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:text="Farming Tip"
+        android:textColor="@color/fontColor"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/userProfileImageCard" />
+
 
     <ImageView
         android:id="@+id/postImageSM"
@@ -92,7 +107,7 @@
         android:layout_marginVertical="7dp"
         android:background="@color/colorPrimary"
         android:scaleType="fitXY"
-        app:layout_constraintTop_toBottomOf="@id/userProfileImageCard"
+        app:layout_constraintTop_toBottomOf="@id/userPostCategorySM"
         app:layout_constraintBottom_toTopOf="@id/userPostTitleValue"/>
 
     <WebView
@@ -103,7 +118,7 @@
         android:layout_marginVertical="7dp"
         android:maxHeight="400dp"
         app:layout_constraintBottom_toTopOf="@id/userPostTitleValue"
-        app:layout_constraintTop_toBottomOf="@id/userProfileImageCard"
+        app:layout_constraintTop_toBottomOf="@id/userPostCategorySM"
         tools:ignore="WebViewLayout" />
 
     <!--    <VideoView-->
@@ -139,11 +154,79 @@
         android:maxLines="3"
         android:layout_marginVertical="7dp"
         android:text="This is the Description."
-        app:layout_constraintBottom_toBottomOf="parent"
         android:lineSpacingExtra="5dp"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/userPostTitleValue" />
+
+    <Button
+        android:id="@+id/likePostBtnSM"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/all_buttons"
+        android:paddingHorizontal="14dp"
+        android:text="Like"
+        android:textAllCaps="false"
+        android:textColor="#fff"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/userPostDescValue" />
+
+    <TextView
+        android:id="@+id/postLikesCountSM"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:text="0 likes"
+        android:textColor="@color/fontColor"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/likePostBtnSM"
+        app:layout_constraintStart_toEndOf="@id/likePostBtnSM"
+        app:layout_constraintTop_toTopOf="@id/likePostBtnSM" />
+
+    <TextView
+        android:id="@+id/postCommentsCountSM"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:text="0 comments"
+        android:textColor="@color/fontColor"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/postLikesCountSM"
+        app:layout_constraintStart_toEndOf="@id/postLikesCountSM"
+        app:layout_constraintTop_toTopOf="@id/postLikesCountSM" />
+
+    <EditText
+        android:id="@+id/postCommentInputSM"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/edit_back"
+        android:hint="Add comment"
+        android:paddingHorizontal="10dp"
+        android:textColor="@color/fontColor"
+        android:textSize="13sp"
+        app:layout_constraintEnd_toStartOf="@id/postCommentSendBtnSM"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/likePostBtnSM" />
+
+    <Button
+        android:id="@+id/postCommentSendBtnSM"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/all_buttons"
+        android:paddingHorizontal="14dp"
+        android:text="Post"
+        android:textAllCaps="false"
+        android:textColor="#fff"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/postCommentInputSM"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/postCommentInputSM"
+        app:layout_constraintTop_toTopOf="@id/postCommentInputSM" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

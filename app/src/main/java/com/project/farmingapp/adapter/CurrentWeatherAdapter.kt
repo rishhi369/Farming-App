@@ -50,17 +50,17 @@ class CurrentWeatherAdapter(val context: Context, val weatherrootdatas:List<Weat
     override fun onBindViewHolder(holder: CurrentWeatherAdapter.CurrentWeatherViewHolder, position: Int) {
         val weathernew =weatherrootdatas[position]
         holder.Ctemp.text = (weathernew.main.temp - 273.15).toInt().toString() + "\u2103"
-        holder.Cwedesc.text = weathernew.weather[0].description.toString().capitalize()
+        val currentWeather = weathernew.weather.firstOrNull()
+        holder.Cwedesc.text = currentWeather?.description?.replaceFirstChar { it.uppercase() } ?: "-"
 
-        holder.CtodayTitle.text = "Today, " + weathernew.dt_txt.toString().slice(10..15)
+        holder.CtodayTitle.text = "Today, " + weathernew.dt_txt.drop(10).take(6)
 
 
-        Log.d("Something", weathernew.dt_txt.toString().slice(10..-1))
+        Log.d("Something", weathernew.dt_txt.drop(10))
 
 //        var tempMin = ""
 //        for(a in weathernew.main.temp_min){
 //        }
-        var ss = weathernew.main.temp_min.length
         holder.CminTemp.text = (weathernew.main.temp_min.toDouble() - 273.1).toInt().toString()+ "\u2103"
 //        holder.continer.animation = AnimationUtils.loadAnimation(context, R.anim.fade_scale)
 
@@ -73,7 +73,7 @@ class CurrentWeatherAdapter(val context: Context, val weatherrootdatas:List<Weat
 
         holder.CmaxTemp.text = (weathernew.main.temp_max.toDouble() - 273.1).toInt().toString() + "\u2103"
         holder.Chumidity.text = weathernew.main.humidity.toString() + "%"
-        var iconcode=weathernew.weather[0].icon.toString()
+        var iconcode = currentWeather?.icon.orEmpty()
         var iconurl = "https://openweathermap.org/img/w/" + iconcode + ".png";
 
         Glide.with(holder.itemView.context)

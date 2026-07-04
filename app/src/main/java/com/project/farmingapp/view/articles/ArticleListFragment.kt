@@ -37,17 +37,21 @@ class ArticleListFragment : Fragment(), CellClickListener {
     private lateinit var viewModel: ArticleViewModel
     lateinit var Adapter: ArticleListAdapter
     lateinit var fruitFragment: FruitsFragment
+    private var collectionName: String = "article_fruits"
+    private var screenTitle: String = "Articles"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
+            collectionName = it.getString("collectionName") ?: collectionName
+            screenTitle = it.getString("title") ?: screenTitle
         }
         viewModel = ViewModelProviders.of(requireActivity())
             .get<ArticleViewModel>(ArticleViewModel::class.java)
 
-        viewModel.getAllArticles("article_fruits")
+        viewModel.getAllArticles(collectionName)
     }
 
     override fun onCreateView(
@@ -57,12 +61,17 @@ class ArticleListFragment : Fragment(), CellClickListener {
 
         viewModel.message3.observe(viewLifecycleOwner, Observer {
 
+            if (it.isNullOrEmpty()) {
+                recyclerArticleListFrag.adapter = null
+                return@Observer
+            }
+
             Log.d("Art All Data", it[0].data.toString())
 
 
-            Adapter = ArticleListAdapter(activity!!.applicationContext, it, this)
+            Adapter = ArticleListAdapter(requireContext(), it, this)
             recyclerArticleListFrag.adapter = Adapter
-            recyclerArticleListFrag.layoutManager = GridLayoutManager(activity!!.applicationContext, 2)
+            recyclerArticleListFrag.layoutManager = GridLayoutManager(requireContext(), 2)
 
         })
 
@@ -94,7 +103,7 @@ class ArticleListFragment : Fragment(), CellClickListener {
         super.onViewCreated(view, savedInstanceState)
 
         setHasOptionsMenu(true)
-        (activity as AppCompatActivity).supportActionBar?.title = "Articles"
+        (activity as AppCompatActivity).supportActionBar?.title = screenTitle
 
     }
 
@@ -105,7 +114,7 @@ class ArticleListFragment : Fragment(), CellClickListener {
         val bundle = Bundle()
         bundle.putString("name", name)
         fruitFragment.setArguments(bundle)
-        val transaction = activity!!.supportFragmentManager
+        val transaction = parentFragmentManager
             .beginTransaction()
             .replace(R.id.frame_layout, fruitFragment, name)
             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)

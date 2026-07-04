@@ -41,9 +41,9 @@ class EcommerceAdapter(val context: Context, val ecommtListData : List<DocumentS
         holder.itemView.ecommPrice.text = "\u20B9 "+currentList.get("price").toString()
         holder.itemView.ecommretailer.text = currentList.get("retailer").toString()
         holder.itemView.ecommItemAvailability.text = currentList.get("availability").toString()
-        val allImages = currentList.get("imageUrl") as List<String>
-        Glide.with(context).load(allImages[0].toString()).into(holder.itemView.ecommImage)
-        holder.itemView.ecommRating.rating = currentList.get("rating").toString().toFloat()
+        val allImages = currentList.get("imageUrl") as? List<String> ?: emptyList()
+        Glide.with(context).load(allImages.firstOrNull()).into(holder.itemView.ecommImage)
+        holder.itemView.ecommRating.rating = currentList.get("rating").toString().toFloatOrNull() ?: 0f
 
        holder.itemView.setOnClickListener {
            cellClickListener.onCellClickListener(currentList.id.toString())

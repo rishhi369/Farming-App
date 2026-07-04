@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -12,8 +13,6 @@ import com.project.farmingapp.R
 import com.project.farmingapp.view.user.UserFragment
 import kotlinx.android.synthetic.main.fragment_user.*
 import kotlinx.android.synthetic.main.nav_header.view.*
-import kotlinx.coroutines.channels.consumesAll
-
 class UserDataViewModel : ViewModel() {
 
     var userliveData = MutableLiveData<DocumentSnapshot>()
@@ -24,48 +23,48 @@ class UserDataViewModel : ViewModel() {
         firebaseFireStore.collection("users").document(userId)
             .get()
             .addOnCompleteListener {
-                userliveData.value = it.result
+                val result = it.result
+                if (it.isSuccessful && result != null && result.exists()) {
+                    userliveData.value = result
+                    return@addOnCompleteListener
+                }
+
+                val email = FirebaseAuth.getInstance().currentUser?.email
+                if (!email.isNullOrEmpty() && email != userId) {
+                    firebaseFireStore.collection("users").document(email)
+                        .get()
+                        .addOnSuccessListener { emailResult ->
+                            userliveData.value = emailResult
+                        }
+                }
             }
     }
 
     fun updateUserField(context: Context, userID: String, about: String?, city: String?) {
-
-        if (about !=null) {
-            val firebaseFireStore = FirebaseFirestore.getInstance()
-            firebaseFireStore.collection("users").document("${userID}")
-                .update(
-                    mapOf(
-                        "about" to about
-                    )
-                )
-                .addOnSuccessListener {
-                    Log.d("UserDataViewModel", "User About Data Updated")
-                    getUserData(userID)
-                }
-                .addOnFailureListener {
-                    Log.d("UserDataViewModel", "Failed to Update About User Data")
-                    Toast.makeText(context, "Failed to Update About. Try Again!", Toast.LENGTH_SHORT).show()
-                }
+        val updates = mutableMapOf<String, Any>()
+        if (about != null) {
+            updates["about"] = about
+        }
+        if (city != null) {
+            updates["city"] = city
         }
 
-        if (city !=null) {
-            val firebaseFireStore = FirebaseFirestore.getInstance()
-            firebaseFireStore.collection("users").document("${userID}")
-                .update(
-                    mapOf(
-                        "city" to city
-                    )
-                )
-                .addOnSuccessListener {
-                    Log.d("UserDataViewModel", "User City Data Updated")
-                    getUserData(userID)
-                }
-                .addOnFailureListener {
-                    Log.d("UserDataViewModel", "Failed to Update City User Data")
-                    Toast.makeText(context, "Failed to Update City Try Again!", Toast.LENGTH_SHORT).show()
-                }
+        if (updates.isEmpty()) {
+            return
         }
-        Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+
+        val firebaseFireStore = FirebaseFirestore.getInstance()
+        firebaseFireStore.collection("users").document(userID)
+            .update(updates)
+            .addOnSuccessListener {
+                Log.d("UserDataViewModel", "User profile data updated")
+                Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+                getUserData(userID)
+            }
+            .addOnFailureListener {
+                Log.d("UserDataViewModel", "Failed to update profile data")
+                Toast.makeText(context, "Failed to update profile. Try Again!", Toast.LENGTH_SHORT).show()
+            }
     }
 
     fun deleteUserPost(userId: String, postId: String){

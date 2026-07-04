@@ -3,6 +3,7 @@ package com.project.farmingapp.viewmodel
 import android.content.Intent
 import android.util.Log
 import android.view.View
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -35,22 +36,54 @@ class AuthViewModel : ViewModel() {
     val userPosts = arrayListOf<String>()
     fun signupButtonClicked(view: View) {
         authListener!!.onStarted()
-        if (name.isNullOrEmpty() || mobNo.toString().length != 10 || mobNo == null || password.isNullOrEmpty() || confPassword.isNullOrEmpty() || city.isNullOrEmpty()) {
-            // Failure
-            authListener!!.onFailure("Error Occurred")
+        val cleanName = name?.trim()
+        val cleanMobile = mobNo?.trim()
+        val cleanEmail = email?.trim()
+        val cleanCity = city?.trim()
+        val cleanPassword = password?.trim()
+        val cleanConfirmPassword = confPassword?.trim()
+
+        if (cleanName.isNullOrEmpty() ||
+            cleanMobile.isNullOrEmpty() ||
+            cleanEmail.isNullOrEmpty() ||
+            cleanCity.isNullOrEmpty() ||
+            cleanPassword.isNullOrEmpty() ||
+            cleanConfirmPassword.isNullOrEmpty()
+        ) {
+            authListener!!.onFailure("Please fill all required fields.")
             return
         }
-        // Success
+
+        if (cleanMobile.length != 10) {
+            authListener!!.onFailure("Mobile number must be 10 digits.")
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(cleanEmail).matches()) {
+            authListener!!.onFailure("Please enter a valid email address.")
+            return
+        }
+
+        if (cleanPassword != cleanConfirmPassword) {
+            authListener!!.onFailure("Password and Confirm Password do not match.")
+            return
+        }
+
+        if (cleanPassword.length < 6) {
+            authListener!!.onFailure("Password must be at least 6 characters.")
+            return
+        }
+
         var data = hashMapOf(
-            "name" to name,
-            "mobNo" to mobNo,
-            "email" to email,
-            "city" to city,
+            "name" to cleanName,
+            "mobNo" to cleanMobile,
+            "email" to cleanEmail,
+            "city" to cleanCity,
             "userType" to userType,
             "posts" to  userPosts,
             "profileImage" to ""
         )
-        val authRepo = AuthRepository().signInWithEmail(email!!, password!!, data)
+        val authRepo = AuthRepository().signInWithEmail(cleanEmail, cleanPassword, data)
         authListener?.onSuccess(authRepo)
     }
 
@@ -89,8 +122,7 @@ class AuthViewModel : ViewModel() {
     fun loginButtonClicked(view: View) {
         authListener!!.onStarted()
         if (loginmail.isNullOrEmpty() || loginpwd.isNullOrEmpty()) {
-            // Failure
-            authListener!!.onFailure("Error Occurred")
+            authListener!!.onFailure("Please enter email and password.")
             return
         }
         // Success

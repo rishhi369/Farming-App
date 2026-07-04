@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: placement_copilot
+      POSTGRES_USER: placement
+      POSTGRES_PASSWORD: placement
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U placement -d placement_copilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    build:
+      context: ./services/api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://placement:placement@postgres:5432/placement_copilot
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_PERSIST_DIR: /app/storage/chroma
+      UPLOAD_DIR: /app/storage/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    volumes:
+      - api_storage:/app/storage
+
+  worker:
+    build:
+      context: ./services/api
+    command: celery -A app.workers.celery_app.celery_app worker --loglevel=INFO
+    env_file:
+      - .env
+    depends_on:
+      - api
+      - redis
+      - postgres
+    volumes:
+      - api_storage:/app/storage
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+        NEXT_PUBLIC_WS_BASE_URL: ws://localhost:8000/api/v1/ws
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_replace_me}
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_WS_BASE_URL: ws://localhost:8000/api/v1/ws
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_replace_me}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-sk_test_replace_me}
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
+  redis_data:
+  api_storage:
+

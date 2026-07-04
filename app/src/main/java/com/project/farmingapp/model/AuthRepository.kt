@@ -24,25 +24,35 @@ class AuthRepository {
 
         firebaseDb = FirebaseFirestore.getInstance()
 
-        val data2 = MutableLiveData<String>()
         firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener {
             if (it.isSuccessful) {
-                firebaseDb!!.collection("users").document("${email}")
-                    .set(otherData)
+                val user = firebaseAuth.currentUser
+                val uid = user?.uid
+
+                if (uid.isNullOrEmpty()) {
+                    data.value = "Unable to create user profile. Please try again."
+                    return@addOnCompleteListener
+                }
+
+                val userData = HashMap(otherData)
+                userData["uid"] = uid
+                userData["email"] = email
+
+                firebaseDb.collection("users").document(uid)
+                    .set(userData)
                     .addOnSuccessListener {
                         data.value = "Success"
                     }
-                    .addOnFailureListener { Exception ->
-                        {
-                            data.value = "Failure"
-                        }
+                    .addOnFailureListener { exception ->
+                        Log.d("AuthRepo", exception.message ?: "Unknown profile creation error")
+                        data.value = exception.message ?: "Failed to create user profile."
                     }
 
-            } else if (it.isCanceled) {
-                data.value = "Failure"
+            } else {
+                data.value = it.exception?.message ?: "Failed to create account."
             }
         }.addOnFailureListener {
-            Log.d("AuthRepo", it.message)
+            Log.d("AuthRepo", it.message ?: "Unknown auth error")
             data.value = it.message
         }
         return data
@@ -55,33 +65,45 @@ class AuthRepository {
     ): LiveData<String> {
         firebaseDb = FirebaseFirestore.getInstance()
         val credential = GoogleAuthProvider.getCredential(idToken, null)
-        firebaseAuth!!.signInWithCredential(credential)
+        firebaseAuth.signInWithCredential(credential)
             .addOnCompleteListener {
                 if (it.isSuccessful) {
-                    val userDocRef = firebaseDb!!.collection("users").document("${email}")
+                    val user = firebaseAuth.currentUser
+                    val uid = user?.uid
+
+                    if (uid.isNullOrEmpty()) {
+                        data.value = "Unable to create user profile. Please try again."
+                        return@addOnCompleteListener
+                    }
+
+                    val userDocRef = firebaseDb.collection("users").document(uid)
 
                     userDocRef.get().addOnSuccessListener {
-                        data.value = "Success"
                         if(it.exists()){
                             Log.d("User", "User Exists")
+                            data.value = "Success"
                         } else{
                             Log.d("User", "User Does not Exists")
-                            firebaseDb!!.collection("users").document("${email}")
-                                .set(otherData)
+                            val userData = HashMap(otherData)
+                            userData["uid"] = uid
+                            userData["email"] = email
+
+                            firebaseDb.collection("users").document(uid)
+                                .set(userData)
                                 .addOnSuccessListener {
                                     data.value = "Success"
                                 }
-                                .addOnFailureListener { Exception ->
-                                    {
-                                        data.value = "Failure"
-                                    }
+                                .addOnFailureListener { exception ->
+                                    Log.d("AuthRepo", exception.message ?: "Unknown profile creation error")
+                                    data.value = exception.message ?: "Failed to create user profile."
                                 }
                         }
+                    }.addOnFailureListener { exception ->
+                        Log.d("AuthRepo", exception.message ?: "Unknown profile lookup error")
+                        data.value = exception.message ?: "Failed to load user profile."
                     }
-
-                    val user = firebaseAuth!!.currentUser
                 } else {
-                    data.value = "Failure"
+                    data.value = it.exception?.message ?: "Google sign-in failed."
                 }
             }
 
@@ -107,7 +129,7 @@ class AuthRepository {
             }
 
         }.addOnFailureListener {
-            Log.d("AuthRepo", it.message)
+            Log.d("AuthRepo", it.message ?: "Unknown auth error")
             data.value = it.message
         }
         return data

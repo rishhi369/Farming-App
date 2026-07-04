@@ -1,14 +1,33 @@
+# Android build artifacts
+build/
 *.iml
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.idea/
+local.properties
+
+# Secrets & Configs (CRITICAL: DO NOT PUSH THESE)
+app/google-services.json
+secrets.properties
+
+# Log files
+*.log
+
+# OS generated files
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+Thumbs.db
+desktop.ini
+
+# Android Studio / IntelliJ files
+*.jks
+*.keystore
+*.p12
+*.apk
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+
+# Captures and traces
+captures/
+*.hprof

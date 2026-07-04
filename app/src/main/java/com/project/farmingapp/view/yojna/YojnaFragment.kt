@@ -36,14 +36,15 @@ class YojnaFragment : Fragment() {
         arguments?.let {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
+            param1 = it.getString("name") ?: param1
         }
-        val tag = this.tag.toString()
-        Log.d("YojnaFragment", this.tag.toString())
+        val schemeId = param1 ?: this.tag.toString()
+        Log.d("YojnaFragment", schemeId)
 
         yojnaViewModel =
             ViewModelProviders.of(requireActivity()).get<YojnaViewModel>(YojnaViewModel::class.java)
 
-        yojnaViewModel.getYojna(this.tag.toString())
+        yojnaViewModel.getYojna(schemeId)
     }
 
     override fun onCreateView(
@@ -82,37 +83,32 @@ class YojnaFragment : Fragment() {
         progressYojna.visibility = View.VISIBLE
 
         yojnaViewModel.msg.observe(viewLifecycleOwner, Observer {
-            yojnaTitle.text = it.get("title").toString()
-            yojnaDesc.text = it.get("description").toString()
-            yojnaDate.text = it.get("launch").toString()
-            yojnaLaunchedBy.text = it.get("headedBy").toString()
-            yojnaBudget.text = it.get("budget").toString()
-            val eligibility: ArrayList<String> = it.get("eligibility") as ArrayList<String>
-            val documents: ArrayList<String> = it.get("documents") as ArrayList<String>
-            val objectives: ArrayList<String> = it.get("objective") as ArrayList<String>
+            yojnaTitle.text = it["title"]?.toString() ?: "Scheme"
+            yojnaDesc.text = it["description"]?.toString() ?: "-"
+            yojnaDate.text = it["launch"]?.toString() ?: "-"
+            yojnaLaunchedBy.text = it["headedBy"]?.toString() ?: "-"
+            yojnaBudget.text = it["budget"]?.toString() ?: "-"
+            val eligibility = it["eligibility"] as? List<String> ?: emptyList()
+            val documents = it["documents"] as? List<String> ?: emptyList()
+            val objectives = it["objective"] as? List<String> ?: emptyList()
 
             yojnaEligibility.text = ""
             yojnaDocumentsRequired.text = ""
             yojnaObjectives.text = ""
 
-            for (i in 0..(eligibility.size - 1)) {
-                yojnaEligibility.text =
-                    yojnaEligibility.text.toString() + (i + 1).toString() + ". " + eligibility[i].toString() + "\n"
-            }
+            yojnaEligibility.text = numberedList(eligibility)
+            yojnaDocumentsRequired.text = numberedList(documents)
+            yojnaObjectives.text = numberedList(objectives)
 
-            for (i in 0..(documents.size - 1)) {
-                yojnaDocumentsRequired.text =
-                    yojnaDocumentsRequired.text.toString() + (i + 1).toString() + ". " + documents[i].toString() + "\n"
-            }
-
-            for (i in 0..(objectives.size - 1)) {
-                yojnaObjectives.text =
-                    yojnaObjectives.text.toString() + (i + 1).toString() + ". " + objectives[i].toString() + "\n"
-            }
-
-            yojnaWebsite.text = it.get("website").toString()
-            Glide.with(this).load(it.get("image").toString()).into(yojnaImage)
+            yojnaWebsite.text = it["website"]?.toString() ?: "-"
+            Glide.with(this).load(it["image"]?.toString()).into(yojnaImage)
             progressYojna.visibility = View.GONE
         })
+    }
+
+    private fun numberedList(values: List<String>): String {
+        return values.mapIndexed { index, value -> "${index + 1}. $value" }
+            .joinToString("\n")
+            .ifBlank { "-" }
     }
 }

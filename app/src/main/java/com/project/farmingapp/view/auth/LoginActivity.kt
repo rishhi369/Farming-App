@@ -77,8 +77,14 @@ class LoginActivity : AppCompatActivity(), AuthListener {
     }
 
     fun signIn() {
+        val webClientId = getString(R.string.google_web_client_id)
+        if (webClientId.isBlank()) {
+            toast("Google sign-in is not configured yet.")
+            return
+        }
+
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestIdToken(webClientId)
             .requestEmail()
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
@@ -111,12 +117,14 @@ class LoginActivity : AppCompatActivity(), AuthListener {
                 Intent(this, DashboardActivity::class.java).also {
                     startActivity(it)
                 }
+            } else {
+                toast(it?.toString() ?: "Login failed. Please try again.")
             }
         })
     }
 
     override fun onFailure(message: String) {
         progressLogin.hide()
-        toast("Failure")
+        toast(message)
     }
 }

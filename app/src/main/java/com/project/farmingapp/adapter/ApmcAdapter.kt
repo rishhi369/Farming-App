@@ -8,8 +8,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.project.farmingapp.R
 import com.project.farmingapp.model.data.APMCCustomRecords
-import com.project.farmingapp.model.data.APMCMain
-import com.project.farmingapp.model.data.APMCRecords
 
 class ApmcAdapter(val context: Context, val data: List<APMCCustomRecords>) :
     RecyclerView.Adapter<ApmcAdapter.ApmcViewHolder>() {
@@ -35,22 +33,11 @@ class ApmcAdapter(val context: Context, val data: List<APMCCustomRecords>) :
 
     override fun onBindViewHolder(holder: ApmcViewHolder, position: Int) {
         val mainData = data[position]
-        holder.market.text = mainData.market
-        holder.location.text = mainData.district + " , " + mainData.state
-        for (i in mainData.commodity) {
-            holder.commodity.text = holder.commodity.text .toString()+ i + "\n"
-        }
-        holder.commodity.text = holder.commodity.text.toString().trimEnd()
-
-        for (i in mainData.min_price){
-            holder.min.text = holder.min.text.toString() + i + "\n"
-        }
-        holder.min.text = holder.min.text.toString().trimEnd()
-
-        for(i in mainData.max_price){
-            holder.max.text = holder.max.text.toString() + i + "\n"
-        }
-        holder.max.text = holder.max.text.toString().trimEnd()
+        holder.market.text = mainData.market.ifBlank { "Local Market" }
+        holder.location.text = "${mainData.district} , ${mainData.state}"
+        holder.commodity.text = mainData.commodity.joinToString("\n") { it.ifBlank { "Crop" } }
+        holder.min.text = mainData.min_price.joinToString("\n") { it.ifBlank { "-" } }
+        holder.max.text = mainData.max_price.joinToString("\n") { it.ifBlank { "-" } }
 
 //        holder.modal.text=mainData.modal_price
     }

@@ -34,16 +34,16 @@ class YojnaAdapter(val context: Context, val yojnaData: List<DocumentSnapshot>, 
     override fun onBindViewHolder(holder: YojnaListviewHolder, position: Int) {
       val singleYojna=yojnaData[position]
 
-        holder.yojnaName.text = singleYojna.data!!.get("title").toString()
-        holder.yojnaStatus.text = singleYojna.data!!.get("status").toString()
-        holder.yojnaDate.text = singleYojna.data!!.get("launch").toString()
-        val url = singleYojna.data!!.get("image").toString()
+        holder.yojnaName.text = singleYojna.getString("title") ?: "Scheme"
+        holder.yojnaStatus.text = singleYojna.getString("status") ?: "-"
+        holder.yojnaDate.text = singleYojna.get("launch")?.toString() ?: "-"
+        val url = singleYojna.getString("image")
         Glide.with(holder.itemView.context)
             .load(url)
             .into(holder.yojnaImage)
 
         holder.yojnaCard.setOnClickListener {
-            cellClickListener.onCellClickListener(singleYojna.data!!.get("title").toString())
+            cellClickListener.onCellClickListener(singleYojna.id)
         }
     }
 

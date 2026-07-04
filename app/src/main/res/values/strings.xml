@@ -1,9 +1,24 @@
 <resources>
     <string name="app_name">Agri India</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="hello_blank_fragment">Agri India</string>
     <string name="open">Open</string>
     <string name="close">Close</string>
     <string name="loading">Loading...</string>
+    <string name="google_web_client_id"></string>
     <string name="key_id">rzp_test_4KlOjIggoWzTlr</string>
+    <string name="empty_posts">No posts yet. Share your first farming update.</string>
+    <string name="empty_orders">No orders yet. Place a demo order to see it here.</string>
+    <string name="use_my_location">Use My Location</string>
+    <string name="place_demo_order">Place Demo Order</string>
+    <string name="net_value_rs">Net Value: Rs</string>
+    <string name="agri_news">Agri News</string>
+    <string name="loading_agri_news">Loading agriculture news...</string>
+    <string name="tap_to_read">Tap to read</string>
+    <string name="dashboard_weather_label">TODAY\'S FARM WEATHER</string>
+    <string name="articles_subtitle">Crop guides, farming methods, diseases, and schemes</string>
+    <string name="agri_news_subtitle">Fresh agriculture headlines with safe offline fallback</string>
+    <string name="products_subtitle">Useful inputs and tools ready for quick browsing</string>
+    <string name="weather_label_humidity">Humidity</string>
+    <string name="weather_label_wind">Wind Speed</string>
+    <string name="home_product_badge">Agri Product</string>
 </resources>

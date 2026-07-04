@@ -14,6 +14,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
 import com.project.farmingapp.PrePaymentFragment
 import com.project.farmingapp.R
 import com.project.farmingapp.adapter.CartItemsAdapter
@@ -39,7 +40,7 @@ class CartFragment : Fragment(), CartItemBuy {
     var isOpened: Boolean = false
     var totalCount = 0
     var totalPrice = 0
-    var items = HashMap<String, Object>()
+    var items = HashMap<String, Any>()
     lateinit var ecommViewModel: EcommViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,71 +84,66 @@ class CartFragment : Fragment(), CartItemBuy {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val firebaseDatabase = FirebaseDatabase.getInstance()
+        val firebaseFirestore = FirebaseFirestore.getInstance()
         val firebaseAuth = FirebaseAuth.getInstance()
-        val cartRef =
-            firebaseDatabase.getReference("${firebaseAuth.currentUser!!.uid}").child("cart")
+        val userId = firebaseAuth.currentUser?.uid
+        if (userId.isNullOrEmpty()) {
+            context?.let {
+                Toast.makeText(it, "Please login again.", Toast.LENGTH_SHORT).show()
+            }
+            progress_cart.visibility = View.GONE
+            loadingTitleText.visibility = View.GONE
+            return
+        }
 
         (activity as AppCompatActivity).supportActionBar?.title = "Cart"
         isOpened = true
 
-        val postListener = object : ValueEventListener {
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if (dataSnapshot.exists()) {
-
-                    items = dataSnapshot.value as HashMap<String, Object>
-
-                    var totalCartPrice = 0
-                    for ((key, value) in items) {
-
-                        val currVal = value as Map<String, Object>
-                        Log.d("Total Items", key.toString())
-                        Log.d("Total Items", value.toString())
-                        ecommViewModel.getSpecificItem("${key}")
-                            .observe(viewLifecycleOwner, Observer {
-                                totalCartPrice += currVal.get("quantity").toString()
-                                    .toInt() * it.get("price").toString().toInt() + it.get("delCharge").toString().toInt()
-                                Log.d("Total Price", currVal.get("quantity").toString())
-                                Log.d("Total Price", it.get("price").toString())
-                                Log.d("Total Price - 2", (currVal.get("quantity").toString().toInt()*it.get("price").toString().toInt()).toString())
-                                totalItemsValue.text = items.size.toString()
-                                totalCostValue.text = "\u20B9" + totalCartPrice.toString()
-                            })
-                        Log.d("Total Price - 3", key.toString())
+        firebaseFirestore.collection("users").document(userId).collection("cart")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    context?.let {
+                        Toast.makeText(it, error.message ?: "Failed to load cart", Toast.LENGTH_SHORT).show()
                     }
+                    progress_cart.visibility = View.GONE
+                    loadingTitleText.visibility = View.GONE
+                    return@addSnapshotListener
+                }
 
-                    if (isOpened == true) {
+                val docs = snapshot?.documents.orEmpty()
+                items = HashMap()
+
+                docs.forEach { doc ->
+                    items[doc.id] = hashMapOf(
+                        "quantity" to (doc.getLong("quantity")?.toInt() ?: 1),
+                        "time" to (doc.getString("time") ?: "")
+                    )
+                }
+
+                var totalCartPrice = 0
+                if (items.isEmpty()) {
+                    totalItemsValue.text = "0"
+                    totalCostValue.text = "\u20B90"
+                }
+
+                for ((key, value) in items) {
+                    val currVal = value as Map<String, Any>
+                    ecommViewModel.getSpecificItem(key).observe(viewLifecycleOwner, Observer {
+                        val quantity = currVal["quantity"].toString().toIntOrNull() ?: 1
+                        val itemPrice = it.get("price").toString().toIntOrNull() ?: 0
+                        val deliveryCharge = it.get("delCharge").toString().toIntOrNull() ?: 0
+                        totalCartPrice += quantity * itemPrice + deliveryCharge
                         totalItemsValue.text = items.size.toString()
                         totalCostValue.text = "\u20B9" + totalCartPrice.toString()
-                    }
-
-
-                    val adapter =
-                        CartItemsAdapter(this@CartFragment, items, this@CartFragment)
-                    recyclerCart.adapter = adapter
-                    recyclerCart.layoutManager = LinearLayoutManager(activity!!.applicationContext)
-                    progress_cart.visibility = View.GONE
-                    loadingTitleText.visibility = View.GONE
-                  
-                } else {
-                    Toast.makeText(
-                        activity!!.applicationContext,
-                        "Item Not Exist",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    progress_cart.visibility = View.GONE
-                    loadingTitleText.visibility = View.GONE
+                    })
                 }
+
+                val adapter = CartItemsAdapter(this@CartFragment, items, this@CartFragment)
+                recyclerCart.adapter = adapter
+                recyclerCart.layoutManager = LinearLayoutManager(requireContext())
+                progress_cart.visibility = View.GONE
+                loadingTitleText.visibility = View.GONE
             }
-        }
-
-
-        cartRef.addValueEventListener(postListener)
-
 
         buyAllBtn.setOnClickListener {
 //            prePaymentfragment = PrePaymentFragment()
@@ -173,7 +169,8 @@ class CartFragment : Fragment(), CartItemBuy {
     }
 
     override fun addToOrders(productId: String, quantity: Int, itemCost: Int, deliveryCost: Int) {
-        Intent(activity!!.applicationContext, RazorPayActivity::class.java).also {
+        val hostContext = context ?: return
+        Intent(hostContext, RazorPayActivity::class.java).also {
             //  it.putExtra("tp", "123")
             it.putExtra("productId", productId)
             it.putExtra("itemCost", itemCost.toString())

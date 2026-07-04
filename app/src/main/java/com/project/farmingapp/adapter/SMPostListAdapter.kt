@@ -2,7 +2,7 @@ package com.project.farmingapp.adapter
 
 import android.content.Context
 import android.text.format.DateUtils
-import android.util.Log
+import android.widget.Toast
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,121 +13,182 @@ import android.webkit.WebViewClient
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.project.farmingapp.R
 import kotlinx.android.synthetic.main.post_with_image_sm.view.*
 
+class SMPostListAdapter(
+    private val context: Context,
+    private val postListData: List<DocumentSnapshot>
+) : RecyclerView.Adapter<SMPostListAdapter.SMPostListViewHolder>() {
 
-class SMPostListAdapter(val context: Context, val postListData : List<DocumentSnapshot>): RecyclerView.Adapter<SMPostListAdapter.SMPostListViewModel>() {
+    class SMPostListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
-    lateinit var firebaseAuth: FirebaseAuth
-    lateinit var firebaseFirestore: FirebaseFirestore
-    class SMPostListViewModel(itemView: View): RecyclerView.ViewHolder(itemView){
-
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SMPostListViewModel {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SMPostListViewHolder {
         val view = LayoutInflater.from(context).inflate(R.layout.post_with_image_sm, parent, false)
-        return SMPostListAdapter.SMPostListViewModel(view)
+        return SMPostListViewHolder(view)
     }
 
-    override fun getItemCount(): Int {
-        return postListData.size
-    }
+    override fun getItemCount(): Int = postListData.size
 
-    override fun onBindViewHolder(holder: SMPostListViewModel, position: Int) {
+    override fun onBindViewHolder(holder: SMPostListViewHolder, position: Int) {
         val currentPost = postListData[position]
+        val item = holder.itemView
 
+        item.userNamePostSM.text = currentPost.getString("name").orEmpty().ifBlank { "Farmer" }
+        item.userPostTitleValue.text = currentPost.getString("title").orEmpty().ifBlank { "Farm Update" }
+        item.userPostDescValue.text = currentPost.getString("description").orEmpty()
+        item.userPostCategorySM.text =
+            currentPost.getString("category").orEmpty().ifBlank { "Farming Tip" }
 
+        val timestamp = currentPost.getLong("timeStamp") ?: System.currentTimeMillis()
+        item.userPostUploadTime.text = DateUtils.getRelativeTimeSpanString(timestamp)
+        bindLikes(item, currentPost)
+        bindComments(item, currentPost)
 
-        holder.itemView.userNamePostSM.text = currentPost.get("name").toString()
-        holder.itemView.userPostTitleValue.text = currentPost.get("title").toString()
-        holder.itemView.userPostDescValue.text = currentPost.get("description").toString()
-        holder.itemView.userPostUploadTime.text = DateUtils.getRelativeTimeSpanString(currentPost.get("timeStamp") as Long)
+        item.postImageSM.visibility = View.GONE
+        item.postVideoSM.visibility = View.GONE
 
-        val imageUrl = currentPost.get("imageUrl")
-        Log.d("Post without Image1", imageUrl.toString())
+        when (currentPost.getString("uploadType").orEmpty()) {
+            "video" -> showVideo(item, currentPost.getString("imageUrl").orEmpty())
+            "image" -> showImage(item, currentPost.getString("imageUrl").orEmpty())
+        }
 
+        item.userProfileImageCard.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
+        item.post_container.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
 
-        val uploadType = currentPost.get("uploadType").toString()
-        if (uploadType == "video"){
+        item.userPostDescValue.setOnClickListener {
+            item.userPostDescValue.maxLines = Int.MAX_VALUE
+        }
 
-//            val mediaController: MediaController = MediaController(context.applicationContext)
-////            val uri: Uri = Uri.parse()
-//            mediaController.setAnchorView(holder.itemView.postVideoSM)
-//
-//            holder.itemView.postVideoSM.setZOrderMediaOverlay(true)
-//            holder.itemView.postVideoSM.setMediaController(mediaController)
-//
-//            Log.d("Upload Type 1 ", uploadType)
-//            holder.itemView.postVideoSM.setVideoPath(currentPost.getString("imageUrl"))
-////            videoView1.requestFocus()
-//            holder.itemView.postVideoSM.setOnPreparedListener {
-//
-//            }
-//            holder.itemView.postVideoSM.start()
-//
-//            holder.itemView.postImageSM.visibility = View.GONE
-//            holder.itemView.postVideoSM.visibility = View.VISIBLE
-
-
-            // Web View
-
-            val webSet: WebSettings = holder.itemView.postVideoSM.settings
-            webSet.javaScriptEnabled = true
-            webSet.loadWithOverviewMode = true
-            webSet.useWideViewPort = true
-
-
-            holder.itemView.postVideoSM.setWebViewClient(object : WebViewClient() {
-                // autoplay when finished loading via javascript injection
-                override fun onPageFinished(view: WebView, url: String) {
-//                    holder.itemView.postVideoSM.loadUrl("javascript:(function() { document.getElementsByTagName('video')[0].play(); })()")
+        val userId = currentPost.getString("userID").orEmpty()
+        if (userId.isNotBlank()) {
+            FirebaseFirestore.getInstance().collection("users").document(userId).get()
+                .addOnSuccessListener {
+                    val profileImage = it.getString("profileImage").orEmpty()
+                    if (profileImage.isNotBlank()) {
+                        Glide.with(context).load(profileImage).into(item.userProfileImagePost)
+                    } else {
+                        item.userProfileImagePost.setImageResource(R.drawable.ic_user_profile)
+                    }
                 }
-            })
-
-
-            holder.itemView.postVideoSM.loadUrl(currentPost.get("imageUrl").toString())
-//            holder.itemView.postVideoSM.stopLoading()
-            holder.itemView.postImageSM.visibility = View.GONE
-            holder.itemView.postVideoSM.visibility = View.VISIBLE
-
-
-        } else if (uploadType == "image"){
-            Glide.with(context).load(currentPost.get("imageUrl")).into(holder.itemView.postImageSM)
-            holder.itemView.postVideoSM.visibility = View.GONE
-
-            holder.itemView.postImageSM.visibility = View.VISIBLE
-            Log.d("Upload Type 2 ", uploadType)
-        }else if (uploadType.isEmpty() ){
-            Log.d("Post without Image2", imageUrl.toString())
-            holder.itemView.postImageSM.visibility = View.GONE
-            holder.itemView.postVideoSM.visibility = View.GONE
-            Log.d("Upload Type 3 ", uploadType)
+        } else {
+            item.userProfileImagePost.setImageResource(R.drawable.ic_user_profile)
         }
+    }
 
-        firebaseAuth = FirebaseAuth.getInstance()
+    private fun bindComments(item: View, currentPost: DocumentSnapshot) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val commentsCount = currentPost.getLong("commentsCount") ?: 0L
+        item.postCommentsCountSM.text = "$commentsCount ${if (commentsCount == 1L) "comment" else "comments"}"
 
-        holder.itemView.userProfileImageCard.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
-        holder.itemView.post_container.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
+        item.postCommentSendBtnSM.setOnClickListener {
+            val user = currentUser
+            val commentText = item.postCommentInputSM.text.toString().trim()
 
+            if (user == null || commentText.isBlank()) {
+                if (commentText.isBlank()) {
+                    Toast.makeText(context, "Enter a comment first", Toast.LENGTH_SHORT).show()
+                }
+                return@setOnClickListener
+            }
 
-        holder.itemView.post_container.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
-//        Glide.with(context).load(firebaseAuth.currentUser!!.photoUrl.toString()).into(holder.itemView.userProfileImagePost)
-        holder.itemView.userPostDescValue.setOnClickListener {
-            holder.itemView.userPostDescValue.maxLines = Int.MAX_VALUE
+            item.postCommentSendBtnSM.isEnabled = false
+            val db = FirebaseFirestore.getInstance()
+            val postRef = db.collection("posts").document(currentPost.id)
+
+            db.collection("users").document(user.uid).get()
+                .addOnSuccessListener { userDoc ->
+                    val userName = user.displayName
+                        ?: userDoc.getString("name")
+                        ?: user.email?.substringBefore("@")
+                        ?: "Farmer"
+
+                    val commentData = hashMapOf<String, Any>(
+                        "userId" to user.uid,
+                        "name" to userName,
+                        "comment" to commentText,
+                        "timeStamp" to System.currentTimeMillis()
+                    )
+
+                    postRef.collection("comments")
+                        .add(commentData)
+                        .addOnSuccessListener {
+                            postRef.update("commentsCount", FieldValue.increment(1))
+                            item.postCommentInputSM.text?.clear()
+                            item.postCommentSendBtnSM.isEnabled = true
+                            Toast.makeText(context, "Comment added", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener {
+                            item.postCommentSendBtnSM.isEnabled = true
+                            Toast.makeText(context, "Unable to add comment", Toast.LENGTH_SHORT).show()
+                        }
+                }
+                .addOnFailureListener {
+                    item.postCommentSendBtnSM.isEnabled = true
+                    Toast.makeText(context, "Unable to add comment", Toast.LENGTH_SHORT).show()
+                }
         }
+    }
 
+    private fun bindLikes(item: View, currentPost: DocumentSnapshot) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+        val likedBy = currentPost.get("likedBy") as? List<*> ?: emptyList<Any>()
+        val likes = currentPost.getLong("likes") ?: likedBy.size.toLong()
+        val isLiked = currentUserId.isNotBlank() && likedBy.contains(currentUserId)
 
+        item.postLikesCountSM.text = "$likes ${if (likes == 1L) "like" else "likes"}"
+        item.likePostBtnSM.text = if (isLiked) "Liked" else "Like"
 
-        firebaseFirestore = FirebaseFirestore.getInstance()
-        firebaseFirestore.collection("users").document("${currentPost.get("userID")}").get()
-            .addOnSuccessListener {
-                val profileImage = it.get("profileImage").toString()
-                if (!profileImage.isNullOrEmpty()){
-                    Glide.with(context).load(it.get("profileImage").toString()).into(holder.itemView.userProfileImagePost)
+        item.likePostBtnSM.setOnClickListener {
+            if (currentUserId.isBlank()) return@setOnClickListener
+
+            item.likePostBtnSM.isEnabled = false
+            val postRef = FirebaseFirestore.getInstance().collection("posts").document(currentPost.id)
+
+            if (isLiked) {
+                postRef.update(
+                    mapOf(
+                        "likes" to FieldValue.increment(-1),
+                        "likedBy" to FieldValue.arrayRemove(currentUserId)
+                    )
+                ).addOnCompleteListener {
+                    item.likePostBtnSM.isEnabled = true
+                }
+            } else {
+                postRef.update(
+                    mapOf(
+                        "likes" to FieldValue.increment(1),
+                        "likedBy" to FieldValue.arrayUnion(currentUserId)
+                    )
+                ).addOnCompleteListener {
+                    item.likePostBtnSM.isEnabled = true
                 }
             }
+        }
+    }
+
+    private fun showImage(item: View, imageUrl: String) {
+        if (imageUrl.isBlank()) return
+
+        Glide.with(context).load(imageUrl).into(item.postImageSM)
+        item.postImageSM.visibility = View.VISIBLE
+    }
+
+    private fun showVideo(item: View, videoUrl: String) {
+        if (videoUrl.isBlank()) return
+
+        val webSet: WebSettings = item.postVideoSM.settings
+        webSet.javaScriptEnabled = true
+        webSet.loadWithOverviewMode = true
+        webSet.useWideViewPort = true
+
+        item.postVideoSM.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView, url: String) = Unit
+        }
+        item.postVideoSM.loadUrl(videoUrl)
+        item.postVideoSM.visibility = View.VISIBLE
     }
 }

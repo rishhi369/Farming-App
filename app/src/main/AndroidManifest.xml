@@ -19,7 +19,9 @@
 
         </activity>
         <activity android:name=".view.ecommerce.RazorPayActivity" />
-        <activity android:name=".view.dashboard.DashboardActivity">
+        <activity
+            android:name=".view.dashboard.DashboardActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,0 +1,2 @@
+"""AI Placement Copilot backend."""
+

@@ -58,12 +58,17 @@ class YojnaListFragment : Fragment(), CellClickListener {
 
         viewModel.message3.observe(viewLifecycleOwner, Observer {
 
-            Log.d("Art All Data", it[0].data.toString())
+            if (it.isNullOrEmpty()) {
+                rcyclr_yojnaList.adapter = null
+                return@Observer
+            }
+
+            Log.d("Art All Data", it.first().data.toString())
 
 
-            Adapter = YojnaAdapter(activity!!.applicationContext, it, this)
+            Adapter = YojnaAdapter(requireContext(), it, this)
             rcyclr_yojnaList.adapter = Adapter
-            rcyclr_yojnaList.layoutManager = LinearLayoutManager(activity!!.applicationContext)
+            rcyclr_yojnaList.layoutManager = LinearLayoutManager(requireContext())
 
         })
         // Inflate the layout for this fragment
@@ -100,7 +105,7 @@ class YojnaListFragment : Fragment(), CellClickListener {
         val bundle = Bundle()
         bundle.putString("name", name)
         yojnaFragment.setArguments(bundle)
-        val transaction = activity!!.supportFragmentManager
+        val transaction = parentFragmentManager
             .beginTransaction()
             .replace(R.id.frame_layout, yojnaFragment, name)
             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)

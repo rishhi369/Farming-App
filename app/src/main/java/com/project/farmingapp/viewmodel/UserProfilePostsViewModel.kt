@@ -110,7 +110,7 @@ class UserProfilePostsViewModel : ViewModel() {
         firebaseFirestore.collection("posts").whereEqualTo("userID", userId)
             .get()
             .addOnSuccessListener {
-                liveData3.value = it.documents as ArrayList<DocumentSnapshot>
+                liveData3.value = ArrayList(it.documents)
                 Log.d("UserPrlPostsViewModel", "Updated data")
             }
             .addOnFailureListener {

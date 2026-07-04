@@ -16,6 +16,7 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.PersistableBundle
 import android.provider.Settings
 import android.service.autofill.UserData
@@ -44,9 +45,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.Glide.with
 import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.material.navigation.NavigationView
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
@@ -112,12 +116,13 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     val firebaseAuth = FirebaseAuth.getInstance()
     var userName = ""
     var data: WeatherRootList? = null
-    var firstTime: Boolean? = null
+    var firstTime: Boolean = false
 
     private var REQUEST_LOCATION_CODE = 101
     private var mGoogleApiClient: GoogleApiClient? = null
     private var mLocation: Location? = null
     private var mLocationRequest: LocationRequest? = null
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val UPDATE_INTERVAL = (2 * 1000).toLong()  /* 10 secs */
     private val FASTEST_INTERVAL: Long = 2000 /* 2 sec */
 
@@ -128,6 +133,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         val binding: ActivityDashboardBinding = DataBindingUtil.setContentView(this, R.layout.activity_dashboard)
         viewModel = ViewModelProviders.of(this).get(UserDataViewModel::class.java)
         binding.userDataViewModel = viewModel
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
 
         toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.open, R.string.close)
@@ -145,17 +151,17 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             .addApi(LocationServices.API)
             .build()
 
-        mGoogleApiClient!!.connect()
+        mGoogleApiClient?.connect()
 
         buildGoogleApiClient()
 
         val currentUser = firebaseAuth.currentUser
 
         sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        firstTime =sharedPreferences.getBoolean("firstTime", true);
+        firstTime = sharedPreferences.getBoolean("firstTime", true)
 
 
-        if(firstTime!!){
+        if (firstTime) {
             Intent(this, IntroActivity::class.java).also {
                 startActivity(it)
             }
@@ -179,7 +185,16 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
 
 
-        viewModel.getUserData(firebaseAuth.currentUser!!.email as String)
+        val signedInUser = firebaseAuth.currentUser
+        if (signedInUser == null) {
+            Intent(this, LoginActivity::class.java).also {
+                startActivity(it)
+            }
+            finish()
+            return
+        }
+
+        viewModel.getUserData(signedInUser.uid)
 
         navView.setNavigationItemSelectedListener(this)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -277,7 +292,11 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         viewModel.userliveData.observe(this, Observer {
 
             val something = navView.getHeaderView(0);
-            val posts = it.get("posts") as List<String>
+            if (!it.exists()) {
+                return@Observer
+            }
+
+            val posts = it.get("posts") as? List<String> ?: emptyList()
             val city = it.get("city")
             userName = it.get("name").toString()
 
@@ -290,10 +309,15 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             }
 
             something.navbarUserName.text = userName
-            something.navbarUserEmail.text = firebaseAuth.currentUser!!.email
-            Glide.with(this).load(it.get("profileImage")).into(something.navbarUserImage)
+            something.navbarUserEmail.text = firebaseAuth.currentUser?.email.orEmpty()
+            val profileImage = it.getString("profileImage").orEmpty()
+            if (profileImage.isNotBlank()) {
+                Glide.with(this).load(profileImage).into(something.navbarUserImage)
+            } else {
+                something.navbarUserImage.setImageResource(R.drawable.ic_user_profile)
+            }
 
-            Log.d("User Data from VM", it.getString("name"))
+            Log.d("User Data from VM", it.getString("name") ?: "")
 
             something.navBarUserPostCount.text = "Posts Count: " + posts.size.toString()
         })
@@ -406,6 +430,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                         Intent(this, LoginActivity::class.java).also {
                             startActivity(it)
                         }
+                        finish()
                     }
                     .setNegativeButton("No") { dialogInterface, i ->
                     }
@@ -468,27 +493,78 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     }
     @SuppressLint("MissingPermission")
     private fun getLocation() {
-        mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-
-        if (mLocation == null) {
-            startLocationUpdates();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            checkLocationPermission()
+            return
         }
-        if (mLocation != null) {
-            Toast.makeText(this, "Lat: " + mLocation!!.latitude.toString(), Toast.LENGTH_SHORT).show()
-            Toast.makeText(this, "Long: " + mLocation!!.longitude.toString(), Toast.LENGTH_SHORT).show()
 
-            val coords = mutableListOf<String>()
-            val geocoder = Geocoder(this, Locale.getDefault())
-            val addresses: List<Address> = geocoder.getFromLocation(mLocation!!.latitude, mLocation!!.longitude, 1)
+        Toast.makeText(this, "Detecting location...", Toast.LENGTH_SHORT).show()
+        val cancellationTokenSource = CancellationTokenSource()
 
-            coords.add(mLocation!!.latitude.toString())
-            coords.add(mLocation!!.longitude.toString())
-            coords.add(addresses[0].locality.toString())
-            weatherViewModel.updateCoordinates(coords)
+        fusedLocationClient
+            .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationTokenSource.token)
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    updateWeatherFromLocation(location)
+                } else {
+                    loadLastKnownLocation()
+                }
+            }
+            .addOnFailureListener {
+                Log.d("DashboardActivity", it.message ?: "Fresh location failed")
+                loadLastKnownLocation()
+            }
+    }
 
-        } else {
-            Toast.makeText(this, "Location not Detected", Toast.LENGTH_SHORT).show();
-        }
+    @SuppressLint("MissingPermission")
+    private fun loadLastKnownLocation() {
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    updateWeatherFromLocation(location)
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Location not detected. Keeping default weather.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(
+                    this,
+                    "Location not detected. Keeping default weather.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+    }
+
+    private fun updateWeatherFromLocation(location: Location) {
+        Thread {
+            val city = try {
+                val geocoder = Geocoder(this, Locale.getDefault())
+                val addresses: List<Address> =
+                    geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                        ?: emptyList()
+                addresses.firstOrNull()?.locality
+                    ?: addresses.firstOrNull()?.subAdminArea
+                    ?: "Current Location"
+            } catch (exception: Exception) {
+                Log.d("DashboardActivity", exception.message ?: "Failed to geocode location")
+                "Current Location"
+            }
+
+            val coords = listOf(
+                location.latitude.toString(),
+                location.longitude.toString(),
+                city
+            )
+
+            Handler(Looper.getMainLooper()).post {
+                weatherViewModel.updateCoordinates(coords)
+                Toast.makeText(this, "Weather updated for $city", Toast.LENGTH_SHORT).show()
+            }
+        }.start()
     }
     private fun startLocationUpdates() {
         // Create the location request
@@ -500,9 +576,11 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this)
+        val googleApiClient = mGoogleApiClient ?: return
+        val locationRequest = mLocationRequest ?: return
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this)
     }
-    override fun onLocationChanged(p0: Location?) {
+    override fun onLocationChanged(p0: Location) {
 //        automatedClick()
     }
 
@@ -512,7 +590,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             .addApi(LocationServices.API)
             .build()
 
-        mGoogleApiClient!!.connect()
+        mGoogleApiClient?.connect()
 //        automatedClick()
     }
 
@@ -535,8 +613,8 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     }
 
     private fun isLocationEnabled(): Boolean {
-        var locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager!!.isProviderEnabled(
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER)
     }
 
@@ -578,16 +656,12 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     override fun onStart() {
         super.onStart()
         mGoogleApiClient?.connect()
-        Handler().postDelayed({
-            automatedClick()
-        }, 1000)
-
     }
 
     override fun onStop() {
         super.onStop()
-        if (mGoogleApiClient!!.isConnected()) {
-            mGoogleApiClient!!.disconnect()
+        if (mGoogleApiClient?.isConnected == true) {
+            mGoogleApiClient?.disconnect()
         }
     }
 }

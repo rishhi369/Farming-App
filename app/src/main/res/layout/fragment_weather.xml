@@ -34,6 +34,19 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <Button
+                android:id="@+id/useMyLocationWeatherBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/all_buttons"
+                android:text="@string/use_my_location"
+                android:textAllCaps="false"
+                android:textColor="#fff"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/weatherCity" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/currentWeather_rcycl"
                 android:layout_width="match_parent"
@@ -42,7 +55,7 @@
                 app:layout_constraintBottom_toTopOf="@id/rcylr_weather"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/weatherCity" />
+                app:layout_constraintTop_toBottomOf="@id/useMyLocationWeatherBtn" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rcylr_weather"

@@ -39,14 +39,14 @@ class ArticleListAdapter(val context: Context, val articleListData: List<Documen
     override fun onBindViewHolder(holder: ArticleListViewholder, position: Int) {
         val singleArticle = articleListData[position]
 
-        holder.articleName.text = singleArticle.data!!.get("title").toString()
+        holder.articleName.text = singleArticle.getString("title") ?: "Article"
         holder.articleCard.setOnClickListener {
-            cellClickListener.onCellClickListener(singleArticle.data!!.get("title").toString())
+            cellClickListener.onCellClickListener(singleArticle.getString("title") ?: singleArticle.id)
         }
-        var list : List<String> = singleArticle.data!!.get("images") as List<String>
+        val list = singleArticle.get("images") as? List<String> ?: emptyList()
 
         Glide.with(holder.itemView.context)
-            .load(list[0])
+            .load(list.firstOrNull())
 //            .apply(RequestOptions.bitmapTransform(
 //                RoundedCorners(20)
 //            ))

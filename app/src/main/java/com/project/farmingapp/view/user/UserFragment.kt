@@ -1,136 +1,46 @@
 package com.project.farmingapp.view.user
 
-import android.app.Activity
 import android.app.AlertDialog
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.Paint
-import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import android.service.autofill.UserData
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
-import androidx.core.graphics.toColorInt
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.google.android.gms.tasks.Continuation
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.UploadTask
 import com.project.farmingapp.R
 import com.project.farmingapp.adapter.PostListUserProfileAdapter
 import com.project.farmingapp.utilities.CellClickListener
-import com.project.farmingapp.view.user.setImageBitmap
-import com.project.farmingapp.viewmodel.ArticleViewModel
 import com.project.farmingapp.viewmodel.UserDataViewModel
 import com.project.farmingapp.viewmodel.UserProfilePostsViewModel
 import kotlinx.android.synthetic.main.fragment_user.*
-import java.io.IOException
-import java.util.*
-import kotlin.collections.ArrayList
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-private lateinit var viewModel: UserProfilePostsViewModel
-private lateinit var userDataViewModel: UserDataViewModel
-
-/**
- * A simple [Fragment] subclass.
- * Use the [UserFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class UserFragment : Fragment(), CellClickListener {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null  
-    private val PICK_IMAGE_REQUEST = 71
-    private var filePath: Uri? = null
-    private var postID: UUID? = null
-    private var storageReference: StorageReference? = null
-    private var bitmap: Bitmap? = null
-    private var uploadProfOrBack: Int? = null
 
-    val firebaseFirestore = FirebaseFirestore.getInstance()
-    val firebaseAuth = FirebaseAuth.getInstance()
-  
+    private lateinit var postsViewModel: UserProfilePostsViewModel
+    private lateinit var userDataViewModel: UserDataViewModel
+    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
 
-
-        viewModel = ViewModelProviders.of(requireActivity())
+        postsViewModel = ViewModelProviders.of(requireActivity())
             .get<UserProfilePostsViewModel>(UserProfilePostsViewModel::class.java)
 
         userDataViewModel = ViewModelProviders.of(requireActivity())
             .get<UserDataViewModel>(UserDataViewModel::class.java)
-      
-        storageReference = FirebaseStorage.getInstance().reference
-        viewModel.getAllPosts(firebaseAuth.currentUser!!.email)
     }
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-
-        viewModel.liveData1.observe(viewLifecycleOwner, Observer {
-            if (it != null) {
-                viewModel.getAllPostsOfUser(it)
-            }
-        })
-
-
-        viewModel.liveData2.observe(viewLifecycleOwner, Observer {
-            if (it != null) {
-                Log.d("Live Data In Frag", it.toString())
-            }
-        })
-
-        viewModel.userProfilePostsLiveData2.observe(viewLifecycleOwner, Observer {
-            Log.d("Some Part 2", it.toString())
-        })
-
         return inflater.inflate(R.layout.fragment_user, container, false)
-    }
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment UserFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            UserFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -139,301 +49,129 @@ class UserFragment : Fragment(), CellClickListener {
         setHasOptionsMenu(true)
         (activity as AppCompatActivity).supportActionBar?.title = "Profile"
 
-//        addAboutTextUserFrag.paintFlags = Paint.UNDERLINE_TEXT_FLAG
-        cityEditUserProfile.visibility = View.GONE
+        setupInitialUi()
+        observeProfile()
+        observePosts()
 
-        viewModel.userProfilePostsLiveData.observe(viewLifecycleOwner, Observer {
-
-            Log.d("Some Part", it.toString())
-        })
-
-        userDataViewModel.userliveData.observe(viewLifecycleOwner, Observer {
-            Log.d("User Fragment", it.data.toString())
-        })
-
-//        aboutValueUserProfileFrag.setOnClickListener {
-//            aboutValueEditUserProfileFrag.visibility = View.VISIBLE
-//            addAboutTextUserFrag.visibility = View.GONE
-//            aboutValueEditUserProfileFrag.setText(aboutValueUserProfileFrag.text.toString())
-//            aboutValueUserProfileFrag.visibility = View.GONE
-//            saveBtnAboutUserProfileFrag.visibility = View.VISIBLE
-//        }
-
-//        addAboutTextUserFrag.setOnClickListener {
-//            aboutValueEditUserProfileFrag.visibility = View.VISIBLE
-//            saveBtnAboutUserProfileFrag.visibility = View.VISIBLE
-//        }
-
-//        saveBtnAboutUserProfileFrag.setOnClickListener {
-//            aboutValueUserProfileFrag.visibility = View.VISIBLE
-//            aboutValueUserProfileFrag.text = aboutValueEditUserProfileFrag.text
-//            saveBtnAboutUserProfileFrag.visibility = View.GONE
-//            userDataViewModel.updateUserField(activity!!.applicationContext, firebaseAuth.currentUser!!.email.toString() as String, aboutValueEditUserProfileFrag.text.toString() as String, null)
-//            aboutValueEditUserProfileFrag.visibility = View.GONE
-//        }
-
-        uploadProgressBarProfile.visibility = View.GONE
-        uploadBackProgressProfile.visibility = View.GONE
-
-
-        uploadUserBackgroundImage.setOnClickListener {
-            val intent = Intent()
-            intent.type = "image/* video/*"
-            intent.action = Intent.ACTION_PICK
-            startActivityForResult(
-                Intent.createChooser(intent, "Select Picture"),
-                PICK_IMAGE_REQUEST
-            )
-            uploadProfOrBack = 1
-
-            Toast.makeText(activity!!.applicationContext, "Uploading Background Image", Toast.LENGTH_SHORT).show()
+        val user = firebaseAuth.currentUser
+        if (user == null) {
+            Toast.makeText(requireContext(), "Please login again", Toast.LENGTH_LONG).show()
+            return
         }
+
+        userEmailUserProfileFrag.text = user.email.orEmpty()
+        userDataViewModel.getUserData(user.uid)
+        postsViewModel.getAllPosts(user.uid)
+
+        imageEdit.setOnClickListener { startEditingProfile() }
+        imageChecked.setOnClickListener { saveProfileEdits() }
 
         uploadProfilePictureImage.setOnClickListener {
-            val intent = Intent()
-            intent.type = "image/* video/*"
-            intent.action = Intent.ACTION_PICK
-            startActivityForResult(
-                Intent.createChooser(intent, "Select Picture"),
-                PICK_IMAGE_REQUEST
-            )
-            uploadProfOrBack = 0
-            Toast.makeText(activity!!.applicationContext, "Uploading your Image", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Image upload is not configured for this demo.", Toast.LENGTH_SHORT).show()
         }
+        uploadUserBackgroundImage.setOnClickListener {
+            Toast.makeText(requireContext(), "Image upload is not configured for this demo.", Toast.LENGTH_SHORT).show()
+        }
+    }
 
+    private fun setupInitialUi() {
+        cityEditUserProfile.visibility = View.GONE
+        aboutValueEditUserProfileFrag.visibility = View.GONE
+        saveBtnAboutUserProfileFrag.visibility = View.GONE
+        imageChecked.visibility = View.GONE
+        uploadProgressBarProfile.visibility = View.GONE
+        uploadBackProgressProfile.visibility = View.GONE
+        uploadProfilePictureImage.visibility = View.GONE
+        uploadUserBackgroundImage.visibility = View.GONE
+        userProfilePostsRecycler.layoutManager = LinearLayoutManager(requireContext())
+    }
 
-        userDataViewModel.userliveData.observe(viewLifecycleOwner, Observer {
-            Log.d("User Data in VM Frag", it.get("name").toString())
-            Log.d("Data in User", it.toString())
-            userNameUserProfileFrag.text = it!!.getString("name")
-            val city = it?.getString("city")
-            if(city == null){
+    private fun observeProfile() {
+        userDataViewModel.userliveData.observe(viewLifecycleOwner, Observer { userDoc ->
+            if (userDoc == null || !userDoc.exists()) {
+                userNameUserProfileFrag.text = "User"
                 userCityUserProfileFrag.text = "City: "
-            } else{
-                userCityUserProfileFrag.text = "City: " + it.getString("city")
+                userPostsCountUserProfileFrag.text = "Posts: 0"
+                aboutValueUserProfileFrag.text = "Add your farming interests and experience."
+                return@Observer
             }
 
-            if(it?.get("profileImage") == null || it?.getString("profileImage").isNullOrBlank()){
-                uploadProfilePictureImage.visibility = View.VISIBLE
-            } else{
-                uploadProfilePictureImage.visibility = View.GONE
-                Glide.with(activity!!.applicationContext).load(it?.get("profileImage"))
-                    .into(userImageUserFrag)
-            }
+            userNameUserProfileFrag.text = userDoc.getString("name").orEmpty().ifBlank { "User" }
+            userCityUserProfileFrag.text = "City: ${userDoc.getString("city").orEmpty()}"
+            userEmailUserProfileFrag.text = firebaseAuth.currentUser?.email.orEmpty()
 
-
-            if(it?.get("backImage") == null || it?.getString("backImage").isNullOrBlank()){
-                uploadUserBackgroundImage.visibility = View.VISIBLE
-            } else{
-                uploadUserBackgroundImage.visibility = View.GONE
-                Glide.with(activity!!.applicationContext).load(it?.getString("backImage"))
-                    .into(userBackgroundImage)
-            }
-
-            val posts = it.get("posts") as List<String>
-            userPostsCountUserProfileFrag.text = "Posts: " + posts.size.toString()
-            userEmailUserProfileFrag.text = firebaseAuth.currentUser!!.email
-            val about = it?.getString("about")
-
-            if (about == null || about == "") {
-                aboutValueUserProfileFrag.visibility = View.GONE
-                aboutValueEditUserProfileFrag.visibility = View.GONE
-                saveBtnAboutUserProfileFrag.visibility = View.GONE
-            } else {
-                aboutValueUserProfileFrag.visibility = View.VISIBLE
-                aboutValueEditUserProfileFrag.visibility = View.GONE
-                saveBtnAboutUserProfileFrag.visibility = View.GONE
-                aboutValueUserProfileFrag.text = about
-            }
-
-        })
-
-        imageEdit.setOnClickListener {
-            uploadProfilePictureImage.visibility = View.VISIBLE
-            uploadUserBackgroundImage.visibility = View.VISIBLE
-            imageChecked.visibility = View.VISIBLE
-            imageEdit.visibility = View.GONE
-            cityEditUserProfile.setText(userCityUserProfileFrag!!.text.toString().removePrefix("City: "))
-            cityEditUserProfile.visibility = View.VISIBLE
-            aboutValueEditUserProfileFrag.visibility = View.VISIBLE
-            aboutValueEditUserProfileFrag.setText(aboutValueUserProfileFrag.text.toString())
-            aboutValueUserProfileFrag.visibility = View.GONE
-        }
-
-        imageChecked.setOnClickListener {
-            uploadProfilePictureImage.visibility = View.GONE
-            uploadUserBackgroundImage.visibility = View.GONE
-            imageEdit.visibility = View.VISIBLE
-            cityEditUserProfile.visibility = View.GONE
-            imageChecked.visibility = View.GONE
-            userDataViewModel.updateUserField(activity!!.applicationContext, firebaseAuth.currentUser!!.email.toString() as String, aboutValueEditUserProfileFrag.text.toString(), cityEditUserProfile.text.toString())
-            userDataViewModel.getUserData(firebaseAuth.currentUser!!.email.toString())
-            aboutValueEditUserProfileFrag.visibility = View.GONE
+            val about = userDoc.getString("about").orEmpty()
+            aboutValueUserProfileFrag.text = about.ifBlank { "Add your farming interests and experience." }
             aboutValueUserProfileFrag.visibility = View.VISIBLE
-        }
-    }
 
+            val posts = userDoc.get("posts") as? List<*> ?: emptyList<Any>()
+            userPostsCountUserProfileFrag.text = "Posts: ${posts.size}"
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
-            if (data == null || data.data == null) {
-                return
+            val profileImage = userDoc.getString("profileImage").orEmpty()
+            if (profileImage.isNotBlank()) {
+                Glide.with(requireContext()).load(profileImage).into(userImageUserFrag)
+            } else {
+                userImageUserFrag.setImageResource(R.drawable.ic_user_profile)
             }
 
-            filePath = data.data
-            try {
-
-                bitmap = MediaStore.Images.Media.getBitmap(activity!!.contentResolver, filePath)
-
-                if(bitmap!=null){
-                    Log.d("UserFragment", bitmap.toString())
-
-                    if(uploadProfOrBack == 0){
-                        uploadProgressBarProfile.visibility = View.VISIBLE
-                        uploadProfilePictureImage.visibility = View.GONE
-                    } else if(uploadProfOrBack == 1){
-                        uploadBackProgressProfile.visibility = View.VISIBLE
-                        uploadUserBackgroundImage.visibility = View.GONE
-                    }
-
-                    uploadImage2().setImageBitmap(bitmap)
-                }
-
-            } catch (e: IOException) {
-                e.printStackTrace()
+            val backImage = userDoc.getString("backImage").orEmpty()
+            if (backImage.isNotBlank()) {
+                Glide.with(requireContext()).load(backImage).into(userBackgroundImage)
+            } else {
+                userBackgroundImage.setBackgroundResource(R.color.secondary)
             }
-        }
-
+        })
     }
 
-
-    private fun uploadImage2() {
-        if (filePath != null) {
-            postID = UUID.randomUUID()
-            val ref = storageReference?.child("users/" + postID.toString())
-            val uploadTask = ref?.putFile(filePath!!)
-            Log.d("UserFragment", filePath.toString())
-            val urlTask =
-                uploadTask?.continueWithTask(Continuation<UploadTask.TaskSnapshot, Task<Uri>> { task ->
-                    if (!task.isSuccessful) {
-                        Toast.makeText(activity!!.applicationContext, "Error in Uploading", Toast.LENGTH_SHORT).show()
-                        task.exception?.let {
-                            throw it
-                        }
-                    }
-                    return@Continuation ref.downloadUrl
-                })?.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val downloadUri = task.result
-                        Toast.makeText(activity!!.applicationContext, "Uploading...", Toast.LENGTH_SHORT).show()
-                        uploadUserPhotos(downloadUri.toString(), postID!!)
-
-                    } else {
-                        // Handle failures
-                        Toast.makeText(activity!!.applicationContext, "Error", Toast.LENGTH_SHORT).show()
-                        uploadProgressBarProfile.visibility = View.GONE
-                        uploadBackProgressProfile.visibility = View.GONE
-                        uploadUserBackgroundImage.visibility = View.VISIBLE
-                        uploadProfilePictureImage.visibility = View.VISIBLE
-                    }
-                }?.addOnFailureListener {
-                    Toast.makeText(activity!!.applicationContext, "Error2", Toast.LENGTH_SHORT).show()
-                    uploadProgressBarProfile.visibility = View.GONE
-                    uploadBackProgressProfile.visibility = View.GONE
-                    uploadUserBackgroundImage.visibility = View.VISIBLE
-                    uploadProfilePictureImage.visibility = View.VISIBLE
-                }
-        } else {
-
-        }
+    private fun observePosts() {
+        postsViewModel.liveData3.observe(viewLifecycleOwner, Observer { posts ->
+            val safePosts = posts ?: arrayListOf()
+            userPostsCountUserProfileFrag.text = "Posts: ${safePosts.size}"
+            userProfilePostsRecycler.adapter =
+                PostListUserProfileAdapter(requireContext(), safePosts, this)
+        })
     }
 
+    private fun startEditingProfile() {
+        imageEdit.visibility = View.GONE
+        imageChecked.visibility = View.VISIBLE
 
+        cityEditUserProfile.setText(userCityUserProfileFrag.text.toString().removePrefix("City: ").trim())
+        cityEditUserProfile.visibility = View.VISIBLE
 
+        aboutValueEditUserProfileFrag.setText(aboutValueUserProfileFrag.text.toString())
+        aboutValueEditUserProfileFrag.visibility = View.VISIBLE
+        aboutValueUserProfileFrag.visibility = View.GONE
+    }
 
-    fun uploadUserPhotos(uri: String?, postID: UUID?){
+    private fun saveProfileEdits() {
+        val user = firebaseAuth.currentUser ?: return
 
-        if(uploadProfOrBack == 0){
-            firebaseFirestore.collection("users").document(firebaseAuth.currentUser!!.email!!)
-                .update(mapOf(
-                    "profileImage" to uri
-                ))
-                .addOnSuccessListener {
-                    Toast.makeText(activity!!.applicationContext, "Profile Updated", Toast.LENGTH_SHORT).show()
-                    uploadProgressBarProfile.visibility = View.GONE
-                    imageEdit.visibility = View.VISIBLE
-                    imageChecked.visibility = View.GONE
-                    userImageUserFrag.setImageBitmap(bitmap)
-                    userDataViewModel.getUserData(firebaseAuth!!.currentUser!!.email.toString())
-                }
-                .addOnFailureListener {
-                    uploadProgressBarProfile.visibility = View.GONE
-                    userImageUserFrag.visibility = View.VISIBLE
-                    Toast.makeText(activity!!.applicationContext, "Failed to Update Profile", Toast.LENGTH_SHORT).show()
+        imageEdit.visibility = View.VISIBLE
+        imageChecked.visibility = View.GONE
+        cityEditUserProfile.visibility = View.GONE
+        aboutValueEditUserProfileFrag.visibility = View.GONE
+        aboutValueUserProfileFrag.visibility = View.VISIBLE
 
-                }
-        }
-        else if(uploadProfOrBack == 1){
-            firebaseFirestore.collection("users").document(firebaseAuth.currentUser!!.email!!)
-                .update(mapOf(
-                    "backImage" to uri
-                ))
-                .addOnSuccessListener {
-                    Toast.makeText(activity!!.applicationContext, "Profile Updated 2", Toast.LENGTH_SHORT).show()
-                    uploadBackProgressProfile.visibility = View.GONE
-                    userBackgroundImage.setImageBitmap(bitmap)
-                    imageEdit.visibility = View.VISIBLE
-                    imageChecked.visibility = View.GONE
-                    userDataViewModel.getUserData(firebaseAuth!!.currentUser!!.email.toString())
-                }
-                .addOnFailureListener {
-                    uploadBackProgressProfile.visibility = View.GONE
-                    userBackgroundImage.setImageBitmap(bitmap)
-                    Toast.makeText(activity!!.applicationContext, "Failed to Update Profile", Toast.LENGTH_SHORT).show()
-                }
-        }
-
-
+        userDataViewModel.updateUserField(
+            requireContext(),
+            user.uid,
+            aboutValueEditUserProfileFrag.text.toString().trim(),
+            cityEditUserProfile.text.toString().trim()
+        )
     }
 
     override fun onCellClickListener(name: String) {
-        val dialog = AlertDialog.Builder(activity)
+        val user = firebaseAuth.currentUser ?: return
 
-        dialog.setTitle("Your Post")
-            .setMessage("Do you want to edit your post?")
-            .setPositiveButton("View") { dialogInterface, i ->
-
+        AlertDialog.Builder(requireContext())
+            .setTitle("Your Post")
+            .setMessage("Do you want to delete this post?")
+            .setPositiveButton("Delete") { _, _ ->
+                userDataViewModel.deleteUserPost(user.uid, name)
+                postsViewModel.getAllPosts(user.uid)
             }
-            .setNegativeButton("Delete") { dialogInterface, i ->
-                userDataViewModel.deleteUserPost(firebaseAuth.currentUser!!.email!!, name)
-                userDataViewModel.getUserData(firebaseAuth.currentUser!!.email.toString())
-                viewModel.getAllPosts(firebaseAuth.currentUser!!.email)
-            }
-            .setNeutralButton("Cancel"){
-                dialogInterface, i ->
-
-            }
+            .setNegativeButton("Cancel", null)
             .show()
-
-        Toast.makeText(activity!!.applicationContext, "You Clicked" + name.toString(), Toast.LENGTH_SHORT).show()
     }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        viewModel.liveData3.observe(this, Observer {
-            Log.d("All Posts", it.toString())
-            val adapter = PostListUserProfileAdapter(activity!!.applicationContext, it, this)
-            userProfilePostsRecycler.adapter = adapter
-
-            userProfilePostsRecycler.layoutManager =
-                LinearLayoutManager(activity!!.applicationContext)
-            adapter.notifyDataSetChanged()
-
-        })
-    }
-}
-private fun Any.setImageBitmap(bitmap: Bitmap?) {
-
 }
