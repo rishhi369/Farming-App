@@ -27,7 +27,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import android.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -39,7 +39,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.NavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -77,11 +76,6 @@ import com.project.farmingapp.viewmodel.UserProfilePostsViewModel
 import com.project.farmingapp.viewmodel.WeatherViewModel
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.PicassoProvider
-import kotlinx.android.synthetic.main.activity_dashboard.*
-import kotlinx.android.synthetic.main.app_bar_main.*
-import kotlinx.android.synthetic.main.fragment_weather.*
-import kotlinx.android.synthetic.main.nav_header.*
-import kotlinx.android.synthetic.main.nav_header.view.*
 import org.w3c.dom.Document
 import retrofit2.Call
 import retrofit2.Callback
@@ -106,6 +100,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     lateinit var userFragment: UserFragment
     lateinit var socialMediaPostFragment: SocialMediaPostsFragment
     lateinit var smCreatePostFragment: SMCreatePostFragment
+    private lateinit var binding: ActivityDashboardBinding
     private lateinit var viewModel: UserDataViewModel
     private lateinit var viewModel2: UserProfilePostsViewModel
     private lateinit var weatherViewModel: WeatherViewModel
@@ -128,22 +123,20 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dashboard)
-
-        val binding: ActivityDashboardBinding = DataBindingUtil.setContentView(this, R.layout.activity_dashboard)
-        viewModel = ViewModelProviders.of(this).get(UserDataViewModel::class.java)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_dashboard)
+        viewModel = ViewModelProvider(this).get(UserDataViewModel::class.java)
         binding.userDataViewModel = viewModel
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
 
-        toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.open, R.string.close)
-        drawerLayout.addDrawerListener(toggle)
+        toggle = ActionBarDrawerToggle(this, binding.drawerLayout, R.string.open, R.string.close)
+        binding.drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-         weatherViewModel = ViewModelProviders.of(this)
+         weatherViewModel = ViewModelProvider(this)
             .get<WeatherViewModel>(WeatherViewModel::class.java)
 
-        viewModel2 = ViewModelProviders.of(this)
+        viewModel2 = ViewModelProvider(this)
             .get<UserProfilePostsViewModel>(UserProfilePostsViewModel::class.java)
 //        viewModel2.getAllPosts(firebaseAuth.currentUser!!.email.toString())
 
@@ -196,7 +189,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
         viewModel.getUserData(signedInUser.uid)
 
-        navView.setNavigationItemSelectedListener(this)
+        binding.navView.setNavigationItemSelectedListener(this)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         supportActionBar?.title = "Farming App"
@@ -212,19 +205,19 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             .setReorderingAllowed(true)
             .commit()
 
-        bottomNav.selectedItemId = R.id.bottomNavHome
+        binding.appBarMain.bottomNav.selectedItemId = R.id.bottomNavHome
 
-        val something = navView.getHeaderView(0);
+        val something = binding.navView.getHeaderView(0);
 
         if (dashboardFragment.isVisible) {
-            bottomNav.selectedItemId = R.id.bottomNavHome
+            binding.appBarMain.bottomNav.selectedItemId = R.id.bottomNavHome
         }
 
         something.setOnClickListener {
             Toast.makeText(this, "You Clicked Slider", Toast.LENGTH_LONG).show()
 
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START)
+            if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                binding.drawerLayout.closeDrawer(GravityCompat.START)
             } else {
                 super.onBackPressed()
             }
@@ -245,7 +238,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         cartFragment= CartFragment()
         myOrdersFragment=MyOrdersFragment()
 
-        bottomNav.setOnNavigationItemSelectedListener {
+        binding.appBarMain.bottomNav.setOnNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.bottomNavAPMC -> {
                     supportFragmentManager.beginTransaction().apply {
@@ -291,7 +284,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
         viewModel.userliveData.observe(this, Observer {
 
-            val something = navView.getHeaderView(0);
+            val something = binding.navView.getHeaderView(0);
             if (!it.exists()) {
                 return@Observer
             }
@@ -302,24 +295,16 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
 //            val allPosts = viewModel2.liveData3.value as ArrayList<DocumentSnapshot>
 
-            if(city == null){
-                something.cityTextNavHeader.text ="City: "
-            } else{
-                something.cityTextNavHeader.text ="City: " +  it.get("city").toString()
-            }
-
-            something.navbarUserName.text = userName
-            something.navbarUserEmail.text = firebaseAuth.currentUser?.email.orEmpty()
-            val profileImage = it.getString("profileImage").orEmpty()
-            if (profileImage.isNotBlank()) {
-                Glide.with(this).load(profileImage).into(something.navbarUserImage)
-            } else {
-                something.navbarUserImage.setImageResource(R.drawable.ic_user_profile)
-            }
-
             Log.d("User Data from VM", it.getString("name") ?: "")
 
-            something.navBarUserPostCount.text = "Posts Count: " + posts.size.toString()
+            val postCountText = something.findViewById<TextView>(R.id.navBarUserPostCount)
+            postCountText.text = "Posts Count: " + posts.size.toString()
+            val cityText = something.findViewById<TextView>(R.id.cityTextNavHeader)
+            cityText.text = if (city == null) "City: " else "City: " + it.get("city").toString()
+            val nameText = something.findViewById<TextView>(R.id.navbarUserName)
+            nameText.text = userName
+            val emailText = something.findViewById<TextView>(R.id.navbarUserEmail)
+            emailText.text = firebaseAuth.currentUser?.email.orEmpty()
         })
     }
 
@@ -348,7 +333,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        bottomNav.selectedItemId = R.id.bottomNavHome
+        binding.appBarMain.bottomNav.selectedItemId = R.id.bottomNavHome
         when (item.itemId) {
 
             R.id.miItem1 -> {
@@ -437,17 +422,17 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                     .show()
             }
         }
-        drawerLayout.closeDrawer(GravityCompat.START)
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
 
     override fun onBackPressed() {
         super.onBackPressed()
         if (dashboardFragment.isVisible) {
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START)
+            if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                binding.drawerLayout.closeDrawer(GravityCompat.START)
             } else {
-                
+
             }
         }
     }

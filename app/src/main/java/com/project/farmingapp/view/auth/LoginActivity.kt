@@ -7,7 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -20,17 +20,16 @@ import com.project.farmingapp.utilities.toast
 import com.project.farmingapp.view.dashboard.DashboardActivity
 import com.project.farmingapp.viewmodel.AuthListener
 import com.project.farmingapp.viewmodel.AuthViewModel
-import kotlinx.android.synthetic.main.activity_login.*
 
 class LoginActivity : AppCompatActivity(), AuthListener {
     lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var binding: ActivityLoginBinding
     val firebaseAuth = FirebaseAuth.getInstance()
     lateinit var viewModel: AuthViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding: ActivityLoginBinding =
-            DataBindingUtil.setContentView(this, R.layout.activity_login)
-        viewModel = ViewModelProviders.of(this).get(AuthViewModel::class.java)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_login)
+        viewModel = ViewModelProvider(this).get(AuthViewModel::class.java)
         binding.authViewModel = viewModel
         viewModel.authListener = this
 
@@ -40,17 +39,17 @@ class LoginActivity : AppCompatActivity(), AuthListener {
             }
         }
 
-        createaccountText.setOnClickListener {
+        binding.createaccountText.setOnClickListener {
             Intent(this, SignupActivity::class.java).also {
                 startActivity(it)
             }
         }
-        signGoogleBtnLogin.setOnClickListener {
+        binding.signGoogleBtnLogin.setOnClickListener {
             signIn()
         }
 
-        forgotPasswdTextLogin.setOnClickListener {
-            val userEmail = emailEditLogin.text.toString()
+        binding.forgotPasswdTextLogin.setOnClickListener {
+            val userEmail = binding.emailEditLogin.text.toString()
             if (userEmail.isNullOrEmpty()) {
                 Toast.makeText(this, "Please enter your Email", Toast.LENGTH_SHORT).show()
             } else {
@@ -105,12 +104,12 @@ class LoginActivity : AppCompatActivity(), AuthListener {
     }
 
     override fun onStarted() {
-        progressLogin.show()
+        binding.progressLogin.show()
     }
 
     override fun onSuccess(authRepo: LiveData<String>) {
         authRepo.observe(this, Observer {
-            progressLogin.hide()
+            binding.progressLogin.hide()
             if (it.toString() == "Success") {
                 toast("Logged In")
                 Toast.makeText(this, it.toString(), Toast.LENGTH_LONG).show()
@@ -124,7 +123,7 @@ class LoginActivity : AppCompatActivity(), AuthListener {
     }
 
     override fun onFailure(message: String) {
-        progressLogin.hide()
+        binding.progressLogin.hide()
         toast(message)
     }
 }

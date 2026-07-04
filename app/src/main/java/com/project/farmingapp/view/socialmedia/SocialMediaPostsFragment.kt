@@ -13,17 +13,25 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.project.farmingapp.R
 import com.project.farmingapp.adapter.SMPostListAdapter
-import kotlinx.android.synthetic.main.fragment_social_media_posts.*
+import com.project.farmingapp.databinding.FragmentSocialMediaPostsBinding
 
 class SocialMediaPostsFragment : Fragment() {
 
     private var adapter: SMPostListAdapter? = null
+    private var _binding: FragmentSocialMediaPostsBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_social_media_posts, container, false)
+        _binding = FragmentSocialMediaPostsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -32,10 +40,10 @@ class SocialMediaPostsFragment : Fragment() {
         setHasOptionsMenu(true)
         (activity as AppCompatActivity).supportActionBar?.title = "Social Media"
 
-        postsRecycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.postsRecycler.layoutManager = LinearLayoutManager(requireContext())
         loadPosts()
 
-        createPostFloating.setOnClickListener {
+        binding.createPostFloating.setOnClickListener {
             requireActivity().supportFragmentManager
                 .beginTransaction()
                 .replace(R.id.frame_layout, SMCreatePostFragment(), "smCreate")
@@ -51,17 +59,19 @@ class SocialMediaPostsFragment : Fragment() {
             .collection("posts")
             .orderBy("timeStamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
+                if (_binding == null) return@addSnapshotListener
+                
                 if (error != null) {
                     Log.e("SocialMediaPosts", "Unable to load posts", error)
-                    emptyPostsText.visibility = View.VISIBLE
-                    emptyPostsText.text = "Unable to load posts right now"
+                    binding.emptyPostsText.visibility = View.VISIBLE
+                    binding.emptyPostsText.text = "Unable to load posts right now"
                     return@addSnapshotListener
                 }
 
                 val posts = snapshot?.documents.orEmpty()
-                emptyPostsText.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
+                binding.emptyPostsText.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
                 adapter = SMPostListAdapter(requireContext(), posts)
-                postsRecycler.adapter = adapter
+                binding.postsRecycler.adapter = adapter
             }
     }
 }

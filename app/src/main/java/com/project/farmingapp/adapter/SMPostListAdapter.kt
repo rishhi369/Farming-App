@@ -17,50 +17,50 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.project.farmingapp.R
-import kotlinx.android.synthetic.main.post_with_image_sm.view.*
+import com.project.farmingapp.databinding.PostWithImageSmBinding
 
 class SMPostListAdapter(
     private val context: Context,
     private val postListData: List<DocumentSnapshot>
 ) : RecyclerView.Adapter<SMPostListAdapter.SMPostListViewHolder>() {
 
-    class SMPostListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class SMPostListViewHolder(val binding: PostWithImageSmBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SMPostListViewHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.post_with_image_sm, parent, false)
-        return SMPostListViewHolder(view)
+        val binding = PostWithImageSmBinding.inflate(LayoutInflater.from(context), parent, false)
+        return SMPostListViewHolder(binding)
     }
 
     override fun getItemCount(): Int = postListData.size
 
     override fun onBindViewHolder(holder: SMPostListViewHolder, position: Int) {
         val currentPost = postListData[position]
-        val item = holder.itemView
+        val binding = holder.binding
 
-        item.userNamePostSM.text = currentPost.getString("name").orEmpty().ifBlank { "Farmer" }
-        item.userPostTitleValue.text = currentPost.getString("title").orEmpty().ifBlank { "Farm Update" }
-        item.userPostDescValue.text = currentPost.getString("description").orEmpty()
-        item.userPostCategorySM.text =
+        binding.userNamePostSM.text = currentPost.getString("name").orEmpty().ifBlank { "Farmer" }
+        binding.userPostTitleValue.text = currentPost.getString("title").orEmpty().ifBlank { "Farm Update" }
+        binding.userPostDescValue.text = currentPost.getString("description").orEmpty()
+        binding.userPostCategorySM.text =
             currentPost.getString("category").orEmpty().ifBlank { "Farming Tip" }
 
         val timestamp = currentPost.getLong("timeStamp") ?: System.currentTimeMillis()
-        item.userPostUploadTime.text = DateUtils.getRelativeTimeSpanString(timestamp)
-        bindLikes(item, currentPost)
-        bindComments(item, currentPost)
+        binding.userPostUploadTime.text = DateUtils.getRelativeTimeSpanString(timestamp)
+        bindLikes(binding, currentPost)
+        bindComments(binding, currentPost)
 
-        item.postImageSM.visibility = View.GONE
-        item.postVideoSM.visibility = View.GONE
+        binding.postImageSM.visibility = View.GONE
+        binding.postVideoSM.visibility = View.GONE
 
         when (currentPost.getString("uploadType").orEmpty()) {
-            "video" -> showVideo(item, currentPost.getString("imageUrl").orEmpty())
-            "image" -> showImage(item, currentPost.getString("imageUrl").orEmpty())
+            "video" -> showVideo(binding, currentPost.getString("imageUrl").orEmpty())
+            "image" -> showImage(binding, currentPost.getString("imageUrl").orEmpty())
         }
 
-        item.userProfileImageCard.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
-        item.post_container.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
+        binding.userProfileImageCard.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
+        binding.postContainer.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition)
 
-        item.userPostDescValue.setOnClickListener {
-            item.userPostDescValue.maxLines = Int.MAX_VALUE
+        binding.userPostDescValue.setOnClickListener {
+            binding.userPostDescValue.maxLines = Int.MAX_VALUE
         }
 
         val userId = currentPost.getString("userID").orEmpty()
@@ -69,24 +69,24 @@ class SMPostListAdapter(
                 .addOnSuccessListener {
                     val profileImage = it.getString("profileImage").orEmpty()
                     if (profileImage.isNotBlank()) {
-                        Glide.with(context).load(profileImage).into(item.userProfileImagePost)
+                        Glide.with(context).load(profileImage).into(binding.userProfileImagePost)
                     } else {
-                        item.userProfileImagePost.setImageResource(R.drawable.ic_user_profile)
+                        binding.userProfileImagePost.setImageResource(R.drawable.ic_user_profile)
                     }
                 }
         } else {
-            item.userProfileImagePost.setImageResource(R.drawable.ic_user_profile)
+            binding.userProfileImagePost.setImageResource(R.drawable.ic_user_profile)
         }
     }
 
-    private fun bindComments(item: View, currentPost: DocumentSnapshot) {
+    private fun bindComments(binding: PostWithImageSmBinding, currentPost: DocumentSnapshot) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val commentsCount = currentPost.getLong("commentsCount") ?: 0L
-        item.postCommentsCountSM.text = "$commentsCount ${if (commentsCount == 1L) "comment" else "comments"}"
+        binding.postCommentsCountSM.text = "$commentsCount ${if (commentsCount == 1L) "comment" else "comments"}"
 
-        item.postCommentSendBtnSM.setOnClickListener {
+        binding.postCommentSendBtnSM.setOnClickListener {
             val user = currentUser
-            val commentText = item.postCommentInputSM.text.toString().trim()
+            val commentText = binding.postCommentInputSM.text.toString().trim()
 
             if (user == null || commentText.isBlank()) {
                 if (commentText.isBlank()) {
@@ -95,7 +95,7 @@ class SMPostListAdapter(
                 return@setOnClickListener
             }
 
-            item.postCommentSendBtnSM.isEnabled = false
+            binding.postCommentSendBtnSM.isEnabled = false
             val db = FirebaseFirestore.getInstance()
             val postRef = db.collection("posts").document(currentPost.id)
 
@@ -117,35 +117,35 @@ class SMPostListAdapter(
                         .add(commentData)
                         .addOnSuccessListener {
                             postRef.update("commentsCount", FieldValue.increment(1))
-                            item.postCommentInputSM.text?.clear()
-                            item.postCommentSendBtnSM.isEnabled = true
+                            binding.postCommentInputSM.text?.clear()
+                            binding.postCommentSendBtnSM.isEnabled = true
                             Toast.makeText(context, "Comment added", Toast.LENGTH_SHORT).show()
                         }
                         .addOnFailureListener {
-                            item.postCommentSendBtnSM.isEnabled = true
+                            binding.postCommentSendBtnSM.isEnabled = true
                             Toast.makeText(context, "Unable to add comment", Toast.LENGTH_SHORT).show()
                         }
                 }
                 .addOnFailureListener {
-                    item.postCommentSendBtnSM.isEnabled = true
+                    binding.postCommentSendBtnSM.isEnabled = true
                     Toast.makeText(context, "Unable to add comment", Toast.LENGTH_SHORT).show()
                 }
         }
     }
 
-    private fun bindLikes(item: View, currentPost: DocumentSnapshot) {
+    private fun bindLikes(binding: PostWithImageSmBinding, currentPost: DocumentSnapshot) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
         val likedBy = currentPost.get("likedBy") as? List<*> ?: emptyList<Any>()
         val likes = currentPost.getLong("likes") ?: likedBy.size.toLong()
         val isLiked = currentUserId.isNotBlank() && likedBy.contains(currentUserId)
 
-        item.postLikesCountSM.text = "$likes ${if (likes == 1L) "like" else "likes"}"
-        item.likePostBtnSM.text = if (isLiked) "Liked" else "Like"
+        binding.postLikesCountSM.text = "$likes ${if (likes == 1L) "like" else "likes"}"
+        binding.likePostBtnSM.text = if (isLiked) "Liked" else "Like"
 
-        item.likePostBtnSM.setOnClickListener {
+        binding.likePostBtnSM.setOnClickListener {
             if (currentUserId.isBlank()) return@setOnClickListener
 
-            item.likePostBtnSM.isEnabled = false
+            binding.likePostBtnSM.isEnabled = false
             val postRef = FirebaseFirestore.getInstance().collection("posts").document(currentPost.id)
 
             if (isLiked) {
@@ -155,7 +155,7 @@ class SMPostListAdapter(
                         "likedBy" to FieldValue.arrayRemove(currentUserId)
                     )
                 ).addOnCompleteListener {
-                    item.likePostBtnSM.isEnabled = true
+                    binding.likePostBtnSM.isEnabled = true
                 }
             } else {
                 postRef.update(
@@ -164,31 +164,31 @@ class SMPostListAdapter(
                         "likedBy" to FieldValue.arrayUnion(currentUserId)
                     )
                 ).addOnCompleteListener {
-                    item.likePostBtnSM.isEnabled = true
+                    binding.likePostBtnSM.isEnabled = true
                 }
             }
         }
     }
 
-    private fun showImage(item: View, imageUrl: String) {
+    private fun showImage(binding: PostWithImageSmBinding, imageUrl: String) {
         if (imageUrl.isBlank()) return
 
-        Glide.with(context).load(imageUrl).into(item.postImageSM)
-        item.postImageSM.visibility = View.VISIBLE
+        Glide.with(context).load(imageUrl).into(binding.postImageSM)
+        binding.postImageSM.visibility = View.VISIBLE
     }
 
-    private fun showVideo(item: View, videoUrl: String) {
+    private fun showVideo(binding: PostWithImageSmBinding, videoUrl: String) {
         if (videoUrl.isBlank()) return
 
-        val webSet: WebSettings = item.postVideoSM.settings
+        val webSet: WebSettings = binding.postVideoSM.settings
         webSet.javaScriptEnabled = true
         webSet.loadWithOverviewMode = true
         webSet.useWideViewPort = true
 
-        item.postVideoSM.webViewClient = object : WebViewClient() {
+        binding.postVideoSM.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView, url: String) = Unit
         }
-        item.postVideoSM.loadUrl(videoUrl)
-        item.postVideoSM.visibility = View.VISIBLE
+        binding.postVideoSM.loadUrl(videoUrl)
+        binding.postVideoSM.visibility = View.VISIBLE
     }
 }

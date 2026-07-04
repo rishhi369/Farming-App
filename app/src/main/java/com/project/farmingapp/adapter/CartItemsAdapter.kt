@@ -10,10 +10,10 @@ import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.project.farmingapp.R
+import com.project.farmingapp.databinding.SingleCartItemBinding
 import com.project.farmingapp.utilities.CartItemBuy
 import com.project.farmingapp.view.ecommerce.CartFragment
 import com.project.farmingapp.viewmodel.EcommViewModel
-import kotlinx.android.synthetic.main.single_cart_item.view.*
 
 class CartItemsAdapter(
     val context: CartFragment,
@@ -25,11 +25,11 @@ class CartItemsAdapter(
     var deliveryCharge = 0
     var quantity = 0
 
-    class CartItemsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class CartItemsViewHolder(val binding: SingleCartItemBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CartItemsViewHolder {
-        val view = LayoutInflater.from(context.context).inflate(R.layout.single_cart_item, parent, false)
-        return CartItemsViewHolder(view)
+        val binding = SingleCartItemBinding.inflate(LayoutInflater.from(context.requireContext()), parent, false)
+        return CartItemsViewHolder(binding)
     }
 
     override fun getItemCount(): Int {
@@ -38,6 +38,7 @@ class CartItemsAdapter(
 
     override fun onBindViewHolder(holder: CartItemsViewHolder, position: Int) {
         val currentData = allData.entries.toTypedArray()[position]
+        val binding = holder.binding
         val firebaseFirestore = FirebaseFirestore.getInstance()
         val firebaseAuth = FirebaseAuth.getInstance()
         val userId = firebaseAuth.currentUser?.uid ?: return
@@ -45,52 +46,53 @@ class CartItemsAdapter(
             .collection("cart").document(currentData.key)
         val curr = currentData.value as Map<String, Any>
 
-        holder.itemView.cartItemBuyBtn.setOnClickListener {
-            val qty = holder.itemView.quantityCountEcomm.text.toString().toInt()
-            val itemPrice = holder.itemView.itemPriceCart.text.toString()
+        binding.cartItemBuyBtn.setOnClickListener {
+            val qty = binding.quantityCountEcomm.text.toString().toInt()
+            val itemPrice = binding.itemPriceCart.text.toString()
                 .filter { it.isDigit() }
                 .toIntOrNull() ?: 0
-            val deliveryCharge = holder.itemView.deliveryChargeCart.text.toString().toInt()
-            Log.d("totalPrice", quantity.toString())
-            Log.d("totalPrice", itemCost.toString())
-            Log.d("totalPrice", deliveryCharge.toString())
-            cartitembuy.addToOrders(currentData.key, qty, itemPrice, deliveryCharge)
+            val deliveryChargeVal = binding.deliveryChargeCart.text.toString().toIntOrNull() ?: 0
+            cartitembuy.addToOrders(currentData.key, qty, itemPrice, deliveryChargeVal)
         }
 
-        holder.itemView.removeCartBtn.setOnClickListener {
+        binding.removeCartBtn.setOnClickListener {
             itemRef.delete()
         }
 
-        holder.itemView.increaseQtyBtn.setOnClickListener {
-            holder.itemView.quantityCountEcomm.text =
-                (holder.itemView.quantityCountEcomm.text.toString().toInt() + 1).toString()
-            itemRef.update("quantity", holder.itemView.quantityCountEcomm.text.toString().toInt())
+        binding.increaseQtyBtn.setOnClickListener {
+            val newQty = binding.quantityCountEcomm.text.toString().toInt() + 1
+            binding.quantityCountEcomm.text = newQty.toString()
+            itemRef.update("quantity", newQty)
         }
 
-        holder.itemView.decreaseQtyBtn.setOnClickListener {
-            if (holder.itemView.quantityCountEcomm.text.toString().toInt() != 1) {
-                holder.itemView.quantityCountEcomm.text =
-                    (holder.itemView.quantityCountEcomm.text.toString().toInt() - 1).toString()
-                itemRef.update("quantity", holder.itemView.quantityCountEcomm.text.toString().toInt())
+        binding.decreaseQtyBtn.setOnClickListener {
+            val currentQty = binding.quantityCountEcomm.text.toString().toInt()
+            if (currentQty > 1) {
+                val newQty = currentQty - 1
+                binding.quantityCountEcomm.text = newQty.toString()
+                itemRef.update("quantity", newQty)
             }
         }
 
         val ecommViewModel = EcommViewModel()
 
         ecommViewModel.getSpecificItem(currentData.key).observe(context, Observer {
-            itemCost = it.get("price").toString().toInt()
-            deliveryCharge = it.get("delCharge").toString().toInt()
-            quantity = curr["quantity"].toString().toInt()
-            holder.itemView.itemNameCart.text = it.getString("title").toString()
-            holder.itemView.itemPriceCart.text = "\u20B9" + itemCost.toString()
-            holder.itemView.quantityCountEcomm.text = quantity.toString()
-            holder.itemView.deliveryChargeCart.text = deliveryCharge.toString()
-            holder.itemView.cartItemFirm.text = it.get("retailer").toString()
-            holder.itemView.cartItemAvailability.text = it.get("availability").toString()
+            if (it == null) return@Observer
+            
+            itemCost = it.get("price")?.toString()?.toIntOrNull() ?: 0
+            deliveryCharge = it.get("delCharge")?.toString()?.toIntOrNull() ?: 0
+            quantity = curr["quantity"]?.toString()?.toIntOrNull() ?: 1
+            
+            binding.itemNameCart.text = it.getString("title").orEmpty()
+            binding.itemPriceCart.text = "\u20B9" + itemCost.toString()
+            binding.quantityCountEcomm.text = quantity.toString()
+            binding.deliveryChargeCart.text = deliveryCharge.toString()
+            binding.cartItemFirm.text = it.get("retailer")?.toString().orEmpty()
+            binding.cartItemAvailability.text = it.get("availability")?.toString().orEmpty()
 
             val allImages = it.get("imageUrl") as? List<String> ?: emptyList()
-            Glide.with(context).load(allImages.firstOrNull()).into(holder.itemView.cartItemImage)
-            holder.itemView.cartItemBuyBtn.text =
+            Glide.with(context).load(allImages.firstOrNull()).into(binding.cartItemImage)
+            binding.cartItemBuyBtn.text =
                 "Buy Now: " + "\u20B9" + (itemCost * quantity + deliveryCharge).toString()
         })
     }

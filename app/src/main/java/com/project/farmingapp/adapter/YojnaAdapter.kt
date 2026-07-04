@@ -2,29 +2,24 @@ package com.project.farmingapp.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.firestore.DocumentSnapshot
-import com.project.farmingapp.R
+import com.project.farmingapp.databinding.SingleYojnaListBinding
 import com.project.farmingapp.utilities.CellClickListener
 
-class YojnaAdapter(val context: Context, val yojnaData: List<DocumentSnapshot>, private val cellClickListener: CellClickListener): RecyclerView.Adapter<YojnaAdapter.YojnaListviewHolder>() {
-    class YojnaListviewHolder(itemview: View):RecyclerView.ViewHolder(itemview) {
-        var yojnaName = itemView.findViewById<TextView>(R.id.yojnaTitleYojnaList)
-        var yojnaImage = itemView.findViewById<ImageView>(R.id.yojnaImageYojnaList)
-        var yojnaDate = itemView.findViewById<TextView>(R.id.yojnaDateYojnaList)
-        var yojnaCard = itemView.findViewById<CardView>(R.id.singlelistyojnacard)
-        var yojnaStatus = itemView.findViewById<TextView>(R.id.yojnaStatusYojnaList)
-    }
+class YojnaAdapter(
+    val context: Context,
+    val yojnaData: List<DocumentSnapshot>,
+    private val cellClickListener: CellClickListener
+) : RecyclerView.Adapter<YojnaAdapter.YojnaListviewHolder>() {
+
+    class YojnaListviewHolder(val binding: SingleYojnaListBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): YojnaListviewHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.single_yojna_list, parent, false)
-        return YojnaAdapter.YojnaListviewHolder(view)
+        val binding = SingleYojnaListBinding.inflate(LayoutInflater.from(context), parent, false)
+        return YojnaListviewHolder(binding)
     }
 
     override fun getItemCount(): Int {
@@ -32,20 +27,20 @@ class YojnaAdapter(val context: Context, val yojnaData: List<DocumentSnapshot>, 
     }
 
     override fun onBindViewHolder(holder: YojnaListviewHolder, position: Int) {
-      val singleYojna=yojnaData[position]
+        val singleYojna = yojnaData[position]
+        val binding = holder.binding
 
-        holder.yojnaName.text = singleYojna.getString("title") ?: "Scheme"
-        holder.yojnaStatus.text = singleYojna.getString("status") ?: "-"
-        holder.yojnaDate.text = singleYojna.get("launch")?.toString() ?: "-"
+        binding.yojnaTitleYojnaList.text = singleYojna.getString("title") ?: "Scheme"
+        binding.yojnaStatusYojnaList.text = singleYojna.getString("status") ?: "-"
+        binding.yojnaDateYojnaList.text = singleYojna.get("launch")?.toString() ?: "-"
+        
         val url = singleYojna.getString("image")
-        Glide.with(holder.itemView.context)
+        Glide.with(context)
             .load(url)
-            .into(holder.yojnaImage)
+            .into(binding.yojnaImageYojnaList)
 
-        holder.yojnaCard.setOnClickListener {
+        binding.singlelistyojnacard.setOnClickListener {
             cellClickListener.onCellClickListener(singleYojna.id)
         }
     }
-
-
 }

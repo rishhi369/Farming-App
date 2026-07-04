@@ -2,25 +2,24 @@ package com.project.farmingapp.view.introscreen
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.view.get
 import androidx.viewpager2.widget.ViewPager2
 import com.project.farmingapp.R
 import com.project.farmingapp.adapter.IntroAdapter
+import com.project.farmingapp.databinding.ActivityIntroBinding
 import com.project.farmingapp.model.data.IntroData
 import com.project.farmingapp.view.auth.LoginActivity
-import kotlinx.android.synthetic.main.activity_intro.*
 
 class IntroActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityIntroBinding
 
     private val introSliderAdapter = IntroAdapter(
         listOf(
@@ -65,12 +64,13 @@ class IntroActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_intro)
+        binding = ActivityIntroBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        sliderViewPager.adapter = introSliderAdapter
+        binding.sliderViewPager.adapter = introSliderAdapter
         setupIndicators()
         setCurrentIndicator(0)
-        sliderViewPager.registerOnPageChangeCallback(object :
+        binding.sliderViewPager.registerOnPageChangeCallback(object :
             ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
@@ -78,23 +78,18 @@ class IntroActivity : AppCompatActivity() {
             }
         })
 
-        if(sliderViewPager.currentItem + 1 == introSliderAdapter.itemCount){
-            Log.d("IntroActivity", sliderViewPager.currentItem.toString())
-            Log.d("IntroActivity", introSliderAdapter.itemCount.toString())
-            nextBtn.text = "Get Started"
+        if(binding.sliderViewPager.currentItem + 1 == introSliderAdapter.itemCount){
+            binding.nextBtn.text = "Get Started"
         } else{
-            nextBtn.text = "Next"
+            binding.nextBtn.text = "Next"
         }
 
-        nextBtn.setOnClickListener {
-            if (sliderViewPager.currentItem + 1 < introSliderAdapter.itemCount) {
-                sliderViewPager.currentItem += 1
-//                Toast.makeText(this, "Current: ${sliderViewPager.currentItem}", Toast.LENGTH_SHORT).show()
-                nextBtn.text = "Next"
-                if(sliderViewPager.currentItem + 1 == introSliderAdapter.itemCount){
-                    Log.d("IntroActivity", sliderViewPager.currentItem.toString())
-                    Log.d("IntroActivity", introSliderAdapter.itemCount.toString())
-                    nextBtn.text = "Get Started"
+        binding.nextBtn.setOnClickListener {
+            if (binding.sliderViewPager.currentItem + 1 < introSliderAdapter.itemCount) {
+                binding.sliderViewPager.currentItem += 1
+                binding.nextBtn.text = "Next"
+                if(binding.sliderViewPager.currentItem + 1 == introSliderAdapter.itemCount){
+                    binding.nextBtn.text = "Get Started"
                 }
             } else {
 
@@ -108,7 +103,7 @@ class IntroActivity : AppCompatActivity() {
                 finish()
             }
         }
-        skipIntro.setOnClickListener {
+        binding.skipIntro.setOnClickListener {
             Intent(this, LoginActivity::class.java).also {
                 startActivity(it)
             }
@@ -141,7 +136,7 @@ class IntroActivity : AppCompatActivity() {
                 this?.layoutParams = layoutParams
             }
 
-            sliderballs_container.addView(indicators[i])
+            binding.sliderballsContainer.addView(indicators[i])
 
 
         }
@@ -149,9 +144,9 @@ class IntroActivity : AppCompatActivity() {
     }
 
     private fun setCurrentIndicator(index: Int) {
-        val childCount = sliderballs_container.childCount
+        val childCount = binding.sliderballsContainer.childCount
         for (i in 0 until childCount) {
-            val imageView = sliderballs_container.get(i) as ImageView
+            val imageView = binding.sliderballsContainer.get(i) as ImageView
             if (i == index) {
                 imageView.setImageDrawable(
                     ContextCompat.getDrawable(
@@ -170,9 +165,9 @@ class IntroActivity : AppCompatActivity() {
         }
 
         if(index == introSliderAdapter.itemCount - 1){
-            nextBtn.text = "Get Started"
+            binding.nextBtn.text = "Get Started"
         } else{
-            nextBtn.text = "Next"
+            binding.nextBtn.text = "Next"
 
         }
     }

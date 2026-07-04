@@ -13,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.project.farmingapp.R
-import kotlinx.android.synthetic.main.fragment_s_m_create_post.*
+import com.project.farmingapp.databinding.FragmentSMCreatePostBinding
 
 class SMCreatePostFragment : Fragment() {
 
@@ -21,11 +21,20 @@ class SMCreatePostFragment : Fragment() {
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private val categories = listOf("Crop Problem", "Farming Tip", "Market Update", "Question", "Government Scheme")
 
+    private var _binding: FragmentSMCreatePostBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_s_m_create_post, container, false)
+        _binding = FragmentSMCreatePostBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -36,18 +45,18 @@ class SMCreatePostFragment : Fragment() {
 
         setLoading(false)
 
-        uploadImagePreview.visibility = View.GONE
-        createPostTitle.text = "Create Text Post"
-        postCategorySpinnerSM.adapter = ArrayAdapter(
+        binding.uploadImagePreview.visibility = View.GONE
+        binding.createPostTitle.text = "Create Text Post"
+        binding.postCategorySpinnerSM.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
             categories
         )
 
-        createPostBtnSM.setOnClickListener {
-            val title = postTitleSM.text.toString().trim()
-            val description = descPostSM.text.toString().trim()
-            val category = postCategorySpinnerSM.selectedItem?.toString() ?: categories.first()
+        binding.createPostBtnSM.setOnClickListener {
+            val title = binding.postTitleSM.text.toString().trim()
+            val description = binding.descPostSM.text.toString().trim()
+            val category = binding.postCategorySpinnerSM.selectedItem?.toString() ?: categories.first()
 
             when {
                 authUser.currentUser == null -> {
@@ -119,7 +128,7 @@ class SMCreatePostFragment : Fragment() {
                     .addOnCompleteListener {
                         Toast.makeText(requireContext(), "Post created", Toast.LENGTH_LONG).show()
                         setLoading(false)
-                        openPostList()
+                        if (_binding != null) openPostList()
                     }
             }
             .addOnFailureListener {
@@ -142,8 +151,9 @@ class SMCreatePostFragment : Fragment() {
     }
 
     private fun setLoading(isLoading: Boolean) {
-        progress_create_post.visibility = if (isLoading) View.VISIBLE else View.GONE
-        progressTitle.visibility = if (isLoading) View.VISIBLE else View.GONE
-        createPostBtnSM.isEnabled = !isLoading
+        if (_binding == null) return
+        binding.progressCreatePost.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.progressTitle.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.createPostBtnSM.isEnabled = !isLoading
     }
 }

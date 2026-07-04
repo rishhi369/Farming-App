@@ -13,7 +13,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
@@ -22,9 +22,9 @@ import com.project.farmingapp.R
 import com.project.farmingapp.adapter.AttributesNormalAdapter
 import com.project.farmingapp.adapter.AttributesSelectionAdapter
 import com.project.farmingapp.adapter.EcommImageSliderAdapter
+import com.project.farmingapp.databinding.FragmentEcommerceItemBinding
 import com.project.farmingapp.utilities.CellClickListener
 import com.project.farmingapp.viewmodel.EcommViewModel
-import kotlinx.android.synthetic.main.fragment_ecommerce_item.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -41,13 +41,16 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
     private lateinit var firebaseAuth: FirebaseAuth
     private val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss", Locale.getDefault())
 
+    private var _binding: FragmentEcommerceItemBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
-        viewmodel = ViewModelProviders.of(requireActivity())
+        viewmodel = ViewModelProvider(requireActivity())
             .get(EcommViewModel::class.java)
         firebaseFirestore = FirebaseFirestore.getInstance()
         firebaseAuth = FirebaseAuth.getInstance()
@@ -58,7 +61,13 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_ecommerce_item, container, false)
+        _binding = FragmentEcommerceItemBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -73,22 +82,22 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
     }
 
     private fun setupQuantityButtons() {
-        increaseQtyBtn.setOnClickListener {
-            quantityCountEcomm.text = (quantityCountEcomm.text.toString().toInt() + 1).toString()
+        binding.increaseQtyBtn.setOnClickListener {
+            binding.quantityCountEcomm.text = (binding.quantityCountEcomm.text.toString().toInt() + 1).toString()
         }
 
-        decreaseQtyBtn.setOnClickListener {
-            if (quantityCountEcomm.text.toString().toInt() != 1) {
-                quantityCountEcomm.text = (quantityCountEcomm.text.toString().toInt() - 1).toString()
+        binding.decreaseQtyBtn.setOnClickListener {
+            if (binding.quantityCountEcomm.text.toString().toInt() != 1) {
+                binding.quantityCountEcomm.text = (binding.quantityCountEcomm.text.toString().toInt() - 1).toString()
             }
         }
     }
 
     private fun setupColorButtons() {
-        val color1Params = color1.layoutParams
-        val color2Params = color2.layoutParams
-        val color3Params = color3.layoutParams
-        val color4Params = color4.layoutParams
+        val color1Params = binding.color1.layoutParams
+        val color2Params = binding.color2.layoutParams
+        val color3Params = binding.color3.layoutParams
+        val color4Params = binding.color4.layoutParams
         val density = resources.displayMetrics.density
 
         fun select(one: Boolean, two: Boolean, three: Boolean, four: Boolean) {
@@ -100,21 +109,21 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
             color3Params.height = (density * if (three) 35 else 25).toInt()
             color4Params.width = (density * if (four) 40 else 30).toInt()
             color4Params.height = (density * if (four) 35 else 25).toInt()
-            color1.layoutParams = color1Params
-            color2.layoutParams = color2Params
-            color3.layoutParams = color3Params
-            color4.layoutParams = color4Params
+            binding.color1.layoutParams = color1Params
+            binding.color2.layoutParams = color2Params
+            binding.color3.layoutParams = color3Params
+            binding.color4.layoutParams = color4Params
         }
 
         select(one = true, two = false, three = false, four = false)
-        color1.setOnClickListener { select(one = true, two = false, three = false, four = false) }
-        color2.setOnClickListener { select(one = false, two = true, three = false, four = false) }
-        color3.setOnClickListener { select(one = false, two = false, three = true, four = false) }
-        color4.setOnClickListener { select(one = false, two = false, three = false, four = true) }
+        binding.color1.setOnClickListener { select(one = true, two = false, three = false, four = false) }
+        binding.color2.setOnClickListener { select(one = false, two = true, three = false, four = false) }
+        binding.color3.setOnClickListener { select(one = false, two = false, three = true, four = false) }
+        binding.color4.setOnClickListener { select(one = false, two = false, three = false, four = true) }
     }
 
     private fun loadProductDetails() {
-        loadingText.text = "Loading..."
+        binding.loadingText.text = "Loading..."
         val itemId = tag
         val cachedItem = viewmodel.ecommLiveData.value?.firstOrNull { it.id == itemId }
         if (cachedItem != null) {
@@ -123,8 +132,8 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
         }
 
         if (itemId.isNullOrBlank()) {
-            loadingText.text = "Product not found"
-            progress_ecommItem.visibility = View.GONE
+            binding.loadingText.text = "Product not found"
+            binding.progressEcommItem.visibility = View.GONE
             return
         }
 
@@ -135,17 +144,17 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
 
     private fun bindProduct(product: DocumentSnapshot) {
         currentItemId = product.id
-        productTitle.text = product.getString("title") ?: "Product"
-        productShortDescription.text = product.getString("shortDesc") ?: ""
-        productPrice.text = "\u20B9" + (product.get("price")?.toString() ?: "0")
-        productLongDesc.text = product.getString("longDesc") ?: "-"
-        howToUseText.text = product.getString("howtouse") ?: "-"
-        deliverycost.text = product.get("delCharge")?.toString() ?: "0"
-        Rating.rating = product.get("rating").toString().toFloatOrNull() ?: 0f
+        binding.productTitle.text = product.getString("title") ?: "Product"
+        binding.productShortDescription.text = product.getString("shortDesc") ?: ""
+        binding.productPrice.text = "\u20B9" + (product.get("price")?.toString() ?: "0")
+        binding.productLongDesc.text = product.getString("longDesc") ?: "-"
+        binding.howToUseText.text = product.getString("howtouse") ?: "-"
+        binding.deliverycost.text = product.get("delCharge")?.toString() ?: "0"
+        binding.Rating.rating = product.get("rating").toString().toFloatOrNull() ?: 0f
 
         val attributes = product.get("attributes") as? Map<String, Any> ?: emptyMap()
-        colorLinear.visibility = if (attributes.containsKey("Color")) View.VISIBLE else View.GONE
-        colorTitle.visibility = colorLinear.visibility
+        binding.colorLinear.visibility = if (attributes.containsKey("Color")) View.VISIBLE else View.GONE
+        binding.colorTitle.visibility = binding.colorLinear.visibility
 
         val selectionAttributes = mutableListOf<MutableMap<String, Any>>()
         val normalAttributes = mutableListOf<MutableMap<String, Any>>()
@@ -154,21 +163,21 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
             if (value is String) normalAttributes.add(mutableMapOf(key to value))
         }
 
-        recyclerSelectionAttributes.adapter =
+        binding.recyclerSelectionAttributes.adapter =
             AttributesSelectionAdapter(requireContext(), selectionAttributes, this)
-        recyclerSelectionAttributes.layoutManager = LinearLayoutManager(requireContext())
-        recyclerNormalAttributes.adapter =
+        binding.recyclerSelectionAttributes.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerNormalAttributes.adapter =
             AttributesNormalAdapter(requireContext(), normalAttributes)
-        recyclerNormalAttributes.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerNormalAttributes.layoutManager = LinearLayoutManager(requireContext())
 
         val images = product.get("imageUrl") as? List<String> ?: emptyList()
-        poster_slider.adapter = EcommImageSliderAdapter(images)
-        progress_ecommItem.visibility = View.GONE
-        loadingText.visibility = View.GONE
+        binding.posterSlider.adapter = EcommImageSliderAdapter(images)
+        binding.progressEcommItem.visibility = View.GONE
+        binding.loadingText.visibility = View.GONE
     }
 
     private fun setupCartActions() {
-        addToCart.setOnClickListener {
+        binding.addToCart.setOnClickListener {
             val itemId = currentItemId
             val userId = firebaseAuth.currentUser?.uid
             if (itemId.isNullOrEmpty() || userId.isNullOrEmpty()) {
@@ -178,13 +187,13 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
                 return@setOnClickListener
             }
 
-            addToCart.isClickable = false
-            progress_ecommItem.visibility = View.VISIBLE
-            loadingText.text = "Adding to Cart..."
-            loadingText.visibility = View.VISIBLE
+            binding.addToCart.isClickable = false
+            binding.progressEcommItem.visibility = View.VISIBLE
+            binding.loadingText.text = "Adding to Cart..."
+            binding.loadingText.visibility = View.VISIBLE
 
             val cartData = hashMapOf(
-                "quantity" to quantityCountEcomm.text.toString().toInt(),
+                "quantity" to binding.quantityCountEcomm.text.toString().toInt(),
                 "time" to sdf.format(Date())
             )
 
@@ -195,28 +204,32 @@ class EcommerceItemFragment : Fragment(), CellClickListener {
                     context?.let {
                         Toast.makeText(it, "Item Added", Toast.LENGTH_SHORT).show()
                     }
-                    progress_ecommItem.visibility = View.GONE
-                    loadingText.visibility = View.GONE
-                    addToCart.isClickable = true
+                    if (_binding != null) {
+                        binding.progressEcommItem.visibility = View.GONE
+                        binding.loadingText.visibility = View.GONE
+                        binding.addToCart.isClickable = true
+                    }
                 }
                 .addOnFailureListener { exception ->
                     context?.let {
                         Toast.makeText(it, exception.message ?: "Please Try Again!", Toast.LENGTH_SHORT).show()
                     }
-                    progress_ecommItem.visibility = View.GONE
-                    loadingText.visibility = View.GONE
-                    addToCart.isClickable = true
+                    if (_binding != null) {
+                        binding.progressEcommItem.visibility = View.GONE
+                        binding.loadingText.visibility = View.GONE
+                        binding.addToCart.isClickable = true
+                    }
                 }
         }
 
-        buynow.setOnClickListener {
-            val itemCost = productPrice.text.toString().filter { it.isDigit() }
+        binding.buynow.setOnClickListener {
+            val itemCost = binding.productPrice.text.toString().filter { it.isDigit() }
             val hostContext = context ?: return@setOnClickListener
             Intent(hostContext, RazorPayActivity::class.java).also {
                 it.putExtra("productId", currentItemId.toString())
                 it.putExtra("itemCost", itemCost)
-                it.putExtra("quantity", quantityCountEcomm.text.toString())
-                it.putExtra("deliveryCost", deliverycost.text.toString())
+                it.putExtra("quantity", binding.quantityCountEcomm.text.toString())
+                it.putExtra("deliveryCost", binding.deliverycost.text.toString())
                 startActivity(it)
             }
         }

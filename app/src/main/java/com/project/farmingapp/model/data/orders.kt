@@ -1,8 +1,5 @@
 package com.project.farmingapp.model.data
 
-import kotlinx.android.synthetic.main.activity_razor_pay.*
-import java.sql.Timestamp
-
 data class orders(
     var name: String,
     var locality: String,

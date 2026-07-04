@@ -9,13 +9,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
 import com.project.farmingapp.R
 import com.project.farmingapp.adapter.AgriNewsAdapter
 import com.project.farmingapp.adapter.DashboardEcomItemAdapter
+import com.project.farmingapp.databinding.FragmentDashboardBinding
 import com.project.farmingapp.model.data.WeatherRootList
 import com.project.farmingapp.utilities.CellClickListener
 import com.project.farmingapp.view.articles.ArticleListFragment
@@ -25,7 +25,6 @@ import com.project.farmingapp.view.yojna.YojnaListFragment
 import com.project.farmingapp.viewmodel.AgriNewsViewModel
 import com.project.farmingapp.viewmodel.EcommViewModel
 import com.project.farmingapp.viewmodel.WeatherViewModel
-import kotlinx.android.synthetic.main.fragment_dashboard.*
 
 class dashboardFragment : Fragment(), CellClickListener {
 
@@ -34,15 +33,18 @@ class dashboardFragment : Fragment(), CellClickListener {
     private lateinit var agriNewsViewModel: AgriNewsViewModel
     private var data: WeatherRootList? = null
 
+    private var _binding: FragmentDashboardBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        viewModel = ViewModelProviders.of(requireActivity())
-            .get<WeatherViewModel>(WeatherViewModel::class.java)
-        viewModel2 = ViewModelProviders.of(requireActivity())
-            .get<EcommViewModel>(EcommViewModel::class.java)
-        agriNewsViewModel = ViewModelProviders.of(requireActivity())
-            .get<AgriNewsViewModel>(AgriNewsViewModel::class.java)
+        viewModel = ViewModelProvider(requireActivity())
+            .get(WeatherViewModel::class.java)
+        viewModel2 = ViewModelProvider(requireActivity())
+            .get(EcommViewModel::class.java)
+        agriNewsViewModel = ViewModelProvider(requireActivity())
+            .get(AgriNewsViewModel::class.java)
 
         if (viewModel.getCoordinates().value.isNullOrEmpty()) {
             viewModel.updateCoordinates(listOf("19.0760", "72.8777", "Mumbai"))
@@ -56,7 +58,13 @@ class dashboardFragment : Fragment(), CellClickListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_dashboard, container, false)
+        _binding = FragmentDashboardBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -76,57 +84,61 @@ class dashboardFragment : Fragment(), CellClickListener {
         })
 
         viewModel.newDataTrial.observe(viewLifecycleOwner, Observer { weatherData ->
+            if (_binding == null) return@Observer
             data = weatherData
             val currentWeather = weatherData?.list?.firstOrNull() ?: return@Observer
             val city = viewModel.getCoordinates().value?.getOrNull(2).orEmpty().ifBlank { "Mumbai" }
 
-            weathTempTextWeathFrag.text = "${(currentWeather.main.temp - 273.15).toInt()}\u2103"
-            humidityTextWeathFrag.text = "${currentWeather.main.humidity} %"
+            binding.weathTempTextWeathFrag.text = "${(currentWeather.main.temp - 273.15).toInt()}\u2103"
+            binding.humidityTextWeathFrag.text = "${currentWeather.main.humidity} %"
             val windKmh = currentWeather.wind.speed * 3.6
-            windTextWeathFrag.text = "${String.format("%.1f", windKmh)} km/h"
-            weatherCityTitle.text = city
+            binding.windTextWeathFrag.text = "${String.format("%.1f", windKmh)} km/h"
+            binding.weatherCityTitle.text = city
 
             val iconCode = currentWeather.weather.firstOrNull()?.icon
             if (!iconCode.isNullOrBlank()) {
                 val iconUrl = "https://openweathermap.org/img/w/$iconCode.png"
-                Glide.with(requireContext()).load(iconUrl).into(weathIconImageWeathFrag)
+                Glide.with(requireContext()).load(iconUrl).into(binding.weathIconImageWeathFrag)
             }
         })
 
         viewModel2.ecommLiveData.observe(viewLifecycleOwner, Observer { products ->
+            if (_binding == null) return@Observer
             if (products.isNullOrEmpty()) {
-                dashboardEcommRecycler.adapter = null
+                binding.dashboardEcommRecycler.adapter = null
                 return@Observer
             }
 
             val itemsToShow = products.indices.shuffled().take(4)
-            dashboardEcommRecycler.adapter =
+            binding.dashboardEcommRecycler.adapter =
                 DashboardEcomItemAdapter(requireContext(), products, itemsToShow, this)
-            dashboardEcommRecycler.layoutManager =
+            binding.dashboardEcommRecycler.layoutManager =
                 LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         })
 
         agriNewsViewModel.newsStatus.observe(viewLifecycleOwner, Observer { status ->
-            agriNewsStatusText.text = status
-            agriNewsStatusText.visibility = if (status.isNullOrBlank()) View.GONE else View.VISIBLE
+            if (_binding == null) return@Observer
+            binding.agriNewsStatusText.text = status
+            binding.agriNewsStatusText.visibility = if (status.isNullOrBlank()) View.GONE else View.VISIBLE
         })
 
         agriNewsViewModel.newsItems.observe(viewLifecycleOwner, Observer { news ->
+            if (_binding == null) return@Observer
             if (news.isNullOrEmpty()) {
-                agriNewsRecycler.adapter = null
-                agriNewsRecycler.visibility = View.GONE
+                binding.agriNewsRecycler.adapter = null
+                binding.agriNewsRecycler.visibility = View.GONE
                 return@Observer
             }
 
-            agriNewsRecycler.visibility = View.VISIBLE
-            agriNewsRecycler.adapter = AgriNewsAdapter(requireContext(), news)
-            agriNewsRecycler.layoutManager =
+            binding.agriNewsRecycler.visibility = View.VISIBLE
+            binding.agriNewsRecycler.adapter = AgriNewsAdapter(requireContext(), news)
+            binding.agriNewsRecycler.layoutManager =
                 LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         })
     }
 
     private fun setupClicks() {
-        weatherCard.setOnClickListener {
+        binding.weatherCard.setOnClickListener {
             requireActivity().supportFragmentManager
                 .beginTransaction()
                 .replace(R.id.frame_layout, WeatherFragment(), "weatherFrag")
@@ -137,10 +149,10 @@ class dashboardFragment : Fragment(), CellClickListener {
             data?.let { viewModel.messageToB(it) }
         }
 
-        cat1.setOnClickListener { openArticleList("article_plants", "Plant Articles") }
-        cat2.setOnClickListener { openArticleList("article_methods", "Farming Methods") }
-        cat3.setOnClickListener { openArticleList("article_diseases", "Crop Diseases") }
-        cat4.setOnClickListener {
+        binding.cat1.setOnClickListener { openArticleList("article_plants", "Plant Articles") }
+        binding.cat2.setOnClickListener { openArticleList("article_methods", "Farming Methods") }
+        binding.cat3.setOnClickListener { openArticleList("article_diseases", "Crop Diseases") }
+        binding.cat4.setOnClickListener {
             requireActivity().supportFragmentManager
                 .beginTransaction()
                 .replace(R.id.frame_layout, YojnaListFragment(), "yojnaListFrag")
@@ -149,7 +161,7 @@ class dashboardFragment : Fragment(), CellClickListener {
                 .addToBackStack("yojnaListFrag")
                 .commit()
         }
-        cat5.setOnClickListener { openArticleList("article_fruits", "Fruit Articles") }
+        binding.cat5.setOnClickListener { openArticleList("article_fruits", "Fruit Articles") }
     }
 
     override fun onCellClickListener(name: String) {

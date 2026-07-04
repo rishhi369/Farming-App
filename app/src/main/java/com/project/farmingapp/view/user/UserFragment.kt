@@ -9,16 +9,16 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.project.farmingapp.R
 import com.project.farmingapp.adapter.PostListUserProfileAdapter
+import com.project.farmingapp.databinding.FragmentUserBinding
 import com.project.farmingapp.utilities.CellClickListener
 import com.project.farmingapp.viewmodel.UserDataViewModel
 import com.project.farmingapp.viewmodel.UserProfilePostsViewModel
-import kotlinx.android.synthetic.main.fragment_user.*
 
 class UserFragment : Fragment(), CellClickListener {
 
@@ -26,21 +26,30 @@ class UserFragment : Fragment(), CellClickListener {
     private lateinit var userDataViewModel: UserDataViewModel
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
+    private var _binding: FragmentUserBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        postsViewModel = ViewModelProviders.of(requireActivity())
-            .get<UserProfilePostsViewModel>(UserProfilePostsViewModel::class.java)
+        postsViewModel = ViewModelProvider(requireActivity())
+            .get(UserProfilePostsViewModel::class.java)
 
-        userDataViewModel = ViewModelProviders.of(requireActivity())
-            .get<UserDataViewModel>(UserDataViewModel::class.java)
+        userDataViewModel = ViewModelProvider(requireActivity())
+            .get(UserDataViewModel::class.java)
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_user, container, false)
+        _binding = FragmentUserBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -59,66 +68,66 @@ class UserFragment : Fragment(), CellClickListener {
             return
         }
 
-        userEmailUserProfileFrag.text = user.email.orEmpty()
+        binding.userEmailUserProfileFrag.text = user.email.orEmpty()
         userDataViewModel.getUserData(user.uid)
         postsViewModel.getAllPosts(user.uid)
 
-        imageEdit.setOnClickListener { startEditingProfile() }
-        imageChecked.setOnClickListener { saveProfileEdits() }
+        binding.imageEdit.setOnClickListener { startEditingProfile() }
+        binding.imageChecked.setOnClickListener { saveProfileEdits() }
 
-        uploadProfilePictureImage.setOnClickListener {
+        binding.uploadProfilePictureImage.setOnClickListener {
             Toast.makeText(requireContext(), "Image upload is not configured for this demo.", Toast.LENGTH_SHORT).show()
         }
-        uploadUserBackgroundImage.setOnClickListener {
+        binding.uploadUserBackgroundImage.setOnClickListener {
             Toast.makeText(requireContext(), "Image upload is not configured for this demo.", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun setupInitialUi() {
-        cityEditUserProfile.visibility = View.GONE
-        aboutValueEditUserProfileFrag.visibility = View.GONE
-        saveBtnAboutUserProfileFrag.visibility = View.GONE
-        imageChecked.visibility = View.GONE
-        uploadProgressBarProfile.visibility = View.GONE
-        uploadBackProgressProfile.visibility = View.GONE
-        uploadProfilePictureImage.visibility = View.GONE
-        uploadUserBackgroundImage.visibility = View.GONE
-        userProfilePostsRecycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.cityEditUserProfile.visibility = View.GONE
+        binding.aboutValueEditUserProfileFrag.visibility = View.GONE
+        binding.saveBtnAboutUserProfileFrag.visibility = View.GONE
+        binding.imageChecked.visibility = View.GONE
+        binding.uploadProgressBarProfile.visibility = View.GONE
+        binding.uploadBackProgressProfile.visibility = View.GONE
+        binding.uploadProfilePictureImage.visibility = View.GONE
+        binding.uploadUserBackgroundImage.visibility = View.GONE
+        binding.userProfilePostsRecycler.layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun observeProfile() {
         userDataViewModel.userliveData.observe(viewLifecycleOwner, Observer { userDoc ->
             if (userDoc == null || !userDoc.exists()) {
-                userNameUserProfileFrag.text = "User"
-                userCityUserProfileFrag.text = "City: "
-                userPostsCountUserProfileFrag.text = "Posts: 0"
-                aboutValueUserProfileFrag.text = "Add your farming interests and experience."
+                binding.userNameUserProfileFrag.text = "User"
+                binding.userCityUserProfileFrag.text = "City: "
+                binding.userPostsCountUserProfileFrag.text = "Posts: 0"
+                binding.aboutValueUserProfileFrag.text = "Add your farming interests and experience."
                 return@Observer
             }
 
-            userNameUserProfileFrag.text = userDoc.getString("name").orEmpty().ifBlank { "User" }
-            userCityUserProfileFrag.text = "City: ${userDoc.getString("city").orEmpty()}"
-            userEmailUserProfileFrag.text = firebaseAuth.currentUser?.email.orEmpty()
+            binding.userNameUserProfileFrag.text = userDoc.getString("name").orEmpty().ifBlank { "User" }
+            binding.userCityUserProfileFrag.text = "City: ${userDoc.getString("city").orEmpty()}"
+            binding.userEmailUserProfileFrag.text = firebaseAuth.currentUser?.email.orEmpty()
 
             val about = userDoc.getString("about").orEmpty()
-            aboutValueUserProfileFrag.text = about.ifBlank { "Add your farming interests and experience." }
-            aboutValueUserProfileFrag.visibility = View.VISIBLE
+            binding.aboutValueUserProfileFrag.text = about.ifBlank { "Add your farming interests and experience." }
+            binding.aboutValueUserProfileFrag.visibility = View.VISIBLE
 
             val posts = userDoc.get("posts") as? List<*> ?: emptyList<Any>()
-            userPostsCountUserProfileFrag.text = "Posts: ${posts.size}"
+            binding.userPostsCountUserProfileFrag.text = "Posts: ${posts.size}"
 
             val profileImage = userDoc.getString("profileImage").orEmpty()
             if (profileImage.isNotBlank()) {
-                Glide.with(requireContext()).load(profileImage).into(userImageUserFrag)
+                Glide.with(requireContext()).load(profileImage).into(binding.userImageUserFrag)
             } else {
-                userImageUserFrag.setImageResource(R.drawable.ic_user_profile)
+                binding.userImageUserFrag.setImageResource(R.drawable.ic_user_profile)
             }
 
             val backImage = userDoc.getString("backImage").orEmpty()
             if (backImage.isNotBlank()) {
-                Glide.with(requireContext()).load(backImage).into(userBackgroundImage)
+                Glide.with(requireContext()).load(backImage).into(binding.userBackgroundImage)
             } else {
-                userBackgroundImage.setBackgroundResource(R.color.secondary)
+                binding.userBackgroundImage.setBackgroundResource(R.color.secondary)
             }
         })
     }
@@ -126,38 +135,38 @@ class UserFragment : Fragment(), CellClickListener {
     private fun observePosts() {
         postsViewModel.liveData3.observe(viewLifecycleOwner, Observer { posts ->
             val safePosts = posts ?: arrayListOf()
-            userPostsCountUserProfileFrag.text = "Posts: ${safePosts.size}"
-            userProfilePostsRecycler.adapter =
+            binding.userPostsCountUserProfileFrag.text = "Posts: ${safePosts.size}"
+            binding.userProfilePostsRecycler.adapter =
                 PostListUserProfileAdapter(requireContext(), safePosts, this)
         })
     }
 
     private fun startEditingProfile() {
-        imageEdit.visibility = View.GONE
-        imageChecked.visibility = View.VISIBLE
+        binding.imageEdit.visibility = View.GONE
+        binding.imageChecked.visibility = View.VISIBLE
 
-        cityEditUserProfile.setText(userCityUserProfileFrag.text.toString().removePrefix("City: ").trim())
-        cityEditUserProfile.visibility = View.VISIBLE
+        binding.cityEditUserProfile.setText(binding.userCityUserProfileFrag.text.toString().removePrefix("City: ").trim())
+        binding.cityEditUserProfile.visibility = View.VISIBLE
 
-        aboutValueEditUserProfileFrag.setText(aboutValueUserProfileFrag.text.toString())
-        aboutValueEditUserProfileFrag.visibility = View.VISIBLE
-        aboutValueUserProfileFrag.visibility = View.GONE
+        binding.aboutValueEditUserProfileFrag.setText(binding.aboutValueUserProfileFrag.text.toString())
+        binding.aboutValueEditUserProfileFrag.visibility = View.VISIBLE
+        binding.aboutValueUserProfileFrag.visibility = View.GONE
     }
 
     private fun saveProfileEdits() {
         val user = firebaseAuth.currentUser ?: return
 
-        imageEdit.visibility = View.VISIBLE
-        imageChecked.visibility = View.GONE
-        cityEditUserProfile.visibility = View.GONE
-        aboutValueEditUserProfileFrag.visibility = View.GONE
-        aboutValueUserProfileFrag.visibility = View.VISIBLE
+        binding.imageEdit.visibility = View.VISIBLE
+        binding.imageChecked.visibility = View.GONE
+        binding.cityEditUserProfile.visibility = View.GONE
+        binding.aboutValueEditUserProfileFrag.visibility = View.GONE
+        binding.aboutValueUserProfileFrag.visibility = View.VISIBLE
 
         userDataViewModel.updateUserField(
             requireContext(),
             user.uid,
-            aboutValueEditUserProfileFrag.text.toString().trim(),
-            cityEditUserProfile.text.toString().trim()
+            binding.aboutValueEditUserProfileFrag.text.toString().trim(),
+            binding.cityEditUserProfile.text.toString().trim()
         )
     }
 

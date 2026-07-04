@@ -8,18 +8,22 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.firestore.DocumentSnapshot
 import com.project.farmingapp.R
+import com.project.farmingapp.databinding.SingleDashboardEcommItemBinding
 import com.project.farmingapp.utilities.CellClickListener
-import kotlinx.android.synthetic.main.single_dashboard_ecomm_item.view.*
 
+class DashboardEcomItemAdapter(
+    var context: Context,
+    val allData: List<DocumentSnapshot>,
+    val itemsToShow: List<Int>,
+    val cellClickListener: CellClickListener
+) : RecyclerView.Adapter<DashboardEcomItemAdapter.DashboardEcomItemViewHolder>() {
 
-class DashboardEcomItemAdapter(var context: Context,val allData: List<DocumentSnapshot>, val itemsToShow: List<Int>, val cellClickListener: CellClickListener): RecyclerView.Adapter<DashboardEcomItemAdapter.DashboardEcomItemViewHolder>() {
-    class DashboardEcomItemViewHolder(itemView: View): RecyclerView.ViewHolder(itemView){
-
-    }
+    class DashboardEcomItemViewHolder(val binding: SingleDashboardEcommItemBinding) :
+        RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DashboardEcomItemViewHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.single_dashboard_ecomm_item, parent, false)
-        return DashboardEcomItemViewHolder(view)
+        val binding = SingleDashboardEcommItemBinding.inflate(LayoutInflater.from(context), parent, false)
+        return DashboardEcomItemViewHolder(binding)
     }
 
     override fun getItemCount(): Int {
@@ -28,15 +32,16 @@ class DashboardEcomItemAdapter(var context: Context,val allData: List<DocumentSn
 
     override fun onBindViewHolder(holder: DashboardEcomItemViewHolder, position: Int) {
         val currentData = allData[itemsToShow[position]]
+        val binding = holder.binding
 
-        holder.itemView.itemTitle.text = currentData.get("title").toString()
-        holder.itemView.itemPrice.text = "\u20B9"  + currentData.get("price").toString()
+        binding.itemTitle.text = currentData.get("title")?.toString().orEmpty()
+        binding.itemPrice.text = "\u20B9" + currentData.get("price")?.toString().orEmpty()
+        
         val allImages = currentData.get("imageUrl") as? List<String> ?: emptyList()
-        Glide.with(context).load(allImages.firstOrNull()).into(holder.itemView.itemImage)
-        holder.itemView.setOnClickListener {
+        Glide.with(context).load(allImages.firstOrNull()).into(binding.itemImage)
+        
+        binding.root.setOnClickListener {
             cellClickListener.onCellClickListener(currentData.id)
         }
-
     }
-
 }

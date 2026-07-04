@@ -10,13 +10,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
-import com.project.farmingapp.R
-import com.project.farmingapp.utilities.hide
+import com.project.farmingapp.databinding.FragmentFruitsBinding
 import com.project.farmingapp.viewmodel.ArticleListener
 import com.project.farmingapp.viewmodel.ArticleViewModel
-import kotlinx.android.synthetic.main.fragment_fruits.*
 
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
@@ -27,6 +25,9 @@ class FruitsFragment : Fragment(), ArticleListener {
     private var articleTitle: String? = null
     private lateinit var viewModel: ArticleViewModel
 
+    private var _binding: FragmentFruitsBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
@@ -35,8 +36,8 @@ class FruitsFragment : Fragment(), ArticleListener {
             articleTitle = it.getString("name")
         }
 
-        viewModel = ViewModelProviders.of(requireActivity())
-            .get<ArticleViewModel>(ArticleViewModel::class.java)
+        viewModel = ViewModelProvider(requireActivity())
+            .get(ArticleViewModel::class.java)
     }
 
     override fun onCreateView(
@@ -44,7 +45,13 @@ class FruitsFragment : Fragment(), ArticleListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_fruits, container, false)
+        _binding = FragmentFruitsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -59,13 +66,13 @@ class FruitsFragment : Fragment(), ArticleListener {
 
     private fun setupDescriptionToggle() {
         var toggle = 0
-        descToggleBtnFruitFragArt.setOnClickListener {
+        binding.descToggleBtnFruitFragArt.setOnClickListener {
             if (toggle == 0) {
-                descTextValueFruitFragArt.maxLines = Integer.MAX_VALUE
+                binding.descTextValueFruitFragArt.maxLines = Integer.MAX_VALUE
                 toggle = 1
                 rotateDescriptionButton(0.0f, 180f)
             } else {
-                descTextValueFruitFragArt.maxLines = 3
+                binding.descTextValueFruitFragArt.maxLines = 3
                 toggle = 0
                 rotateDescriptionButton(180f, 0f)
             }
@@ -83,7 +90,7 @@ class FruitsFragment : Fragment(), ArticleListener {
         )
         rotateAnim.duration = 2
         rotateAnim.fillAfter = true
-        descToggleBtnFruitFragArt.startAnimation(rotateAnim)
+        binding.descToggleBtnFruitFragArt.startAnimation(rotateAnim)
     }
 
     private fun renderSelectedArticle() {
@@ -93,9 +100,9 @@ class FruitsFragment : Fragment(), ArticleListener {
             ?.data
 
         if (article == null) {
-            titleTextFruitFragArt.text = selectedTitle ?: "Article"
-            descTextValueFruitFragArt.text = "Article details are not available yet."
-            progressArticle.hide()
+            binding.titleTextFruitFragArt.text = selectedTitle ?: "Article"
+            binding.descTextValueFruitFragArt.text = "Article details are not available yet."
+            binding.progressArticle.visibility = View.GONE
             return
         }
 
@@ -103,24 +110,24 @@ class FruitsFragment : Fragment(), ArticleListener {
         val diseases = article["diseases"] as? List<String> ?: emptyList()
         val images = article["images"] as? List<String> ?: emptyList()
 
-        tempTextFruitFragArt.text = attributes["Temperature"]?.toString() ?: "-"
-        monthTextFruitFragArt.text = attributes["Time"]?.toString() ?: "-"
-        titleTextFruitFragArt.text = article["title"]?.toString() ?: "Article"
-        descTextValueFruitFragArt.text = article["description"]?.toString() ?: "-"
-        processTextValueFruitFragArt.text = article["process"]?.toString() ?: "-"
-        soilTextValueFruitFragArt.text = article["soil"]?.toString() ?: "-"
-        stateTextValueFruitFragArt.text = article["state"]?.toString() ?: "-"
-        attr1ValueFruitFragArt.text = attributes["Weight"]?.toString() ?: "-"
-        attr2ValueFruitFragArt.text = attributes["Vitamins"]?.toString() ?: "-"
-        attr3ValueFruitFragArt.text = attributes["Tree Height"]?.toString() ?: "-"
-        attr4ValueFruitFragArt.text = attributes["growthTime"]?.toString() ?: "-"
+        binding.tempTextFruitFragArt.text = attributes["Temperature"]?.toString() ?: "-"
+        binding.monthTextFruitFragArt.text = attributes["Time"]?.toString() ?: "-"
+        binding.titleTextFruitFragArt.text = article["title"]?.toString() ?: "Article"
+        binding.descTextValueFruitFragArt.text = article["description"]?.toString() ?: "-"
+        binding.processTextValueFruitFragArt.text = article["process"]?.toString() ?: "-"
+        binding.soilTextValueFruitFragArt.text = article["soil"]?.toString() ?: "-"
+        binding.stateTextValueFruitFragArt.text = article["state"]?.toString() ?: "-"
+        binding.attr1ValueFruitFragArt.text = attributes["Weight"]?.toString() ?: "-"
+        binding.attr2ValueFruitFragArt.text = attributes["Vitamins"]?.toString() ?: "-"
+        binding.attr3ValueFruitFragArt.text = attributes["Tree Height"]?.toString() ?: "-"
+        binding.attr4ValueFruitFragArt.text = attributes["growthTime"]?.toString() ?: "-"
 
-        Glide.with(this).load(images.firstOrNull()).into(imageFruitFragArt)
-        diseaseTextValueFruitFragArt.text = diseases.mapIndexed { index, disease ->
+        Glide.with(this).load(images.firstOrNull()).into(binding.imageFruitFragArt)
+        binding.diseaseTextValueFruitFragArt.text = diseases.mapIndexed { index, disease ->
             "${index + 1}. $disease"
         }.joinToString("\n")
 
-        progressArticle.hide()
+        binding.progressArticle.visibility = View.GONE
     }
 
     override fun onStarted() {

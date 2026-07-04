@@ -2,34 +2,25 @@ package com.project.farmingapp.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.AbsListView
-import android.widget.AdapterView
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.request.RequestOptions
 import com.google.firebase.firestore.DocumentSnapshot
-import com.project.farmingapp.R
-import com.project.farmingapp.model.data.WeatherList
+import com.project.farmingapp.databinding.ArticleListSingleBinding
 import com.project.farmingapp.utilities.CellClickListener
-import org.kodein.di.android.androidCoreContextTranslators
-import kotlin.math.round
 
-class ArticleListAdapter(val context: Context, val articleListData: List<DocumentSnapshot>, private val cellClickListener: CellClickListener): RecyclerView.Adapter<ArticleListAdapter.ArticleListViewholder>() {
-    class ArticleListViewholder(itemView: View): RecyclerView.ViewHolder(itemView){
-        var articleName = itemView.findViewById<TextView>(R.id.descTextxArticleListFrag)
-        var articleImage = itemView.findViewById<ImageView>(R.id.imageArticleListFrag)
-        var articleCard = itemView.findViewById<CardView>(R.id.articleListCardArtListFrag)
-    }
+class ArticleListAdapter(
+    val context: Context,
+    val articleListData: List<DocumentSnapshot>,
+    private val cellClickListener: CellClickListener
+) : RecyclerView.Adapter<ArticleListAdapter.ArticleListViewholder>() {
+
+    class ArticleListViewholder(val binding: ArticleListSingleBinding) :
+        RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleListViewholder {
-        val view = LayoutInflater.from(context).inflate(R.layout.article_list_single, parent, false)
-        return ArticleListAdapter.ArticleListViewholder(view)
+        val binding = ArticleListSingleBinding.inflate(LayoutInflater.from(context), parent, false)
+        return ArticleListViewholder(binding)
     }
 
     override fun getItemCount(): Int {
@@ -38,19 +29,16 @@ class ArticleListAdapter(val context: Context, val articleListData: List<Documen
 
     override fun onBindViewHolder(holder: ArticleListViewholder, position: Int) {
         val singleArticle = articleListData[position]
+        val binding = holder.binding
 
-        holder.articleName.text = singleArticle.getString("title") ?: "Article"
-        holder.articleCard.setOnClickListener {
+        binding.descTextxArticleListFrag.text = singleArticle.getString("title") ?: "Article"
+        binding.articleListCardArtListFrag.setOnClickListener {
             cellClickListener.onCellClickListener(singleArticle.getString("title") ?: singleArticle.id)
         }
+        
         val list = singleArticle.get("images") as? List<String> ?: emptyList()
-
-        Glide.with(holder.itemView.context)
+        Glide.with(context)
             .load(list.firstOrNull())
-//            .apply(RequestOptions.bitmapTransform(
-//                RoundedCorners(20)
-//            ))
-            .into(holder.articleImage)
-
+            .into(binding.imageArticleListFrag)
     }
 }

@@ -5,8 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.project.farmingapp.R
-import kotlinx.android.synthetic.main.activity_razor_pay.*
+import com.project.farmingapp.databinding.ActivityRazorPayBinding
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -14,6 +13,7 @@ import java.util.Locale
 
 class RazorPayActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityRazorPayBinding
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.getDefault())
@@ -26,7 +26,8 @@ class RazorPayActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_razor_pay)
+        binding = ActivityRazorPayBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         productId = intent.getStringExtra("productId").orEmpty()
         itemCost = intent.getStringExtra("itemCost")?.toIntOrNull() ?: 0
@@ -34,16 +35,16 @@ class RazorPayActivity : AppCompatActivity() {
         deliveryCost = intent.getStringExtra("deliveryCost")?.toIntOrNull() ?: 0
         totalPrice = itemCost * quantity + deliveryCost
 
-        netValue.text = "Net Value: Rs $totalPrice"
-        orderNowBtn.text = "Place Demo Order"
+        binding.netValue.text = "Net Value: Rs $totalPrice"
+        binding.orderNowBtn.text = "Place Demo Order"
 
-        orderNowBtn.setOnClickListener {
-            val name = fullNamePrePay.text.toString().trim()
-            val locality = localityPrePay.text.toString().trim()
-            val city = cityPrePay.text.toString().trim()
-            val state = statePrePay.text.toString().trim()
-            val pincode = pincodePrePay.text.toString().trim()
-            val mobile = mobileNumberPrePay.text.toString().trim()
+        binding.orderNowBtn.setOnClickListener {
+            val name = binding.fullNamePrePay.text.toString().trim()
+            val locality = binding.localityPrePay.text.toString().trim()
+            val city = binding.cityPrePay.text.toString().trim()
+            val state = binding.statePrePay.text.toString().trim()
+            val pincode = binding.pincodePrePay.text.toString().trim()
+            val mobile = binding.mobileNumberPrePay.text.toString().trim()
 
             if (listOf(name, locality, city, state, pincode, mobile).any { it.isBlank() }) {
                 Toast.makeText(this, "Please add all fields", Toast.LENGTH_LONG).show()
@@ -74,7 +75,7 @@ class RazorPayActivity : AppCompatActivity() {
             return
         }
 
-        orderNowBtn.isEnabled = false
+        binding.orderNowBtn.isEnabled = false
 
         val deliveryDate = Calendar.getInstance().apply {
             add(Calendar.DATE, 5)
@@ -108,7 +109,7 @@ class RazorPayActivity : AppCompatActivity() {
                 finish()
             }
             .addOnFailureListener {
-                orderNowBtn.isEnabled = true
+                binding.orderNowBtn.isEnabled = true
                 Toast.makeText(this, it.message ?: "Order failed", Toast.LENGTH_LONG).show()
             }
     }

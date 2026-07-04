@@ -7,7 +7,7 @@ import android.util.Log
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -22,29 +22,28 @@ import com.project.farmingapp.utilities.toast
 import com.project.farmingapp.view.dashboard.DashboardActivity
 import com.project.farmingapp.viewmodel.AuthListener
 import com.project.farmingapp.viewmodel.AuthViewModel
-import kotlinx.android.synthetic.main.activity_signup.*
 
 class SignupActivity : AppCompatActivity(), AuthListener {
 
+    private lateinit var binding: ActivitySignupBinding
     lateinit var googleSignInClient: GoogleSignInClient
     val firebaseAuth = FirebaseAuth.getInstance()
     lateinit var viewModel: AuthViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val binding: ActivitySignupBinding =
-            DataBindingUtil.setContentView(this, R.layout.activity_signup)
-        viewModel = ViewModelProviders.of(this).get(AuthViewModel::class.java)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_signup)
+        viewModel = ViewModelProvider(this).get(AuthViewModel::class.java)
         binding.authViewModel = viewModel
         viewModel.authListener = this
 
-        loginRedirectTextSignup.setOnClickListener {
+        binding.loginRedirectTextSignup.setOnClickListener {
             Intent(this, LoginActivity::class.java).also {
                 startActivity(it)
             }
         }
 
-        signGoogleBtnSignup.setOnClickListener {
+        binding.signGoogleBtnSignup.setOnClickListener {
             signIn()
         }
     }
@@ -76,12 +75,12 @@ class SignupActivity : AppCompatActivity(), AuthListener {
     }
 
     override fun onStarted() {
-        progressSignup.show()
+        binding.progressSignup.show()
     }
 
     override fun onSuccess(authRepo: LiveData<String>) {
         authRepo.observe(this, Observer {
-            progressSignup.hide()
+            binding.progressSignup.hide()
             if (it.toString() == "Success") {
                 toast("Account Created")
                 Intent(this, DashboardActivity::class.java).also {
@@ -94,7 +93,7 @@ class SignupActivity : AppCompatActivity(), AuthListener {
     }
 
     override fun onFailure(message: String) {
-        progressSignup.hide()
+        binding.progressSignup.hide()
         toast(message)
     }
 }

@@ -9,10 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.project.farmingapp.R
-import com.project.farmingapp.view.user.UserFragment
-import kotlinx.android.synthetic.main.fragment_user.*
-import kotlinx.android.synthetic.main.nav_header.view.*
+
 class UserDataViewModel : ViewModel() {
 
     var userliveData = MutableLiveData<DocumentSnapshot>()
@@ -74,6 +71,8 @@ class UserDataViewModel : ViewModel() {
             .delete()
             .addOnSuccessListener {
                 Log.d("User Data View Model", "Post Deleted")
+                // Note: creating a new ViewModel instance like this is generally incorrect as it won't be scoped to any Activity/Fragment,
+                // but we keep the logic the same as the original for now while fixing syntax.
                 UserProfilePostsViewModel().getAllPosts(userId)
                 firebaseFirestore.collection("users").document(userId).update("posts", FieldValue.arrayRemove("${postId}"))
                     .addOnSuccessListener {

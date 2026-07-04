@@ -14,27 +14,36 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.project.farmingapp.R
 import com.project.farmingapp.adapter.MyOrdersAdapter
+import com.project.farmingapp.databinding.FragmentMyOrdersBinding
 import com.project.farmingapp.utilities.CartItemBuy
 import com.project.farmingapp.utilities.CellClickListener
-import kotlinx.android.synthetic.main.fragment_my_orders.*
 
 class MyOrdersFragment : Fragment(), CellClickListener, CartItemBuy {
 
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val firebaseFirestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
 
+    private var _binding: FragmentMyOrdersBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_my_orders, container, false)
+        _binding = FragmentMyOrdersBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         (activity as AppCompatActivity).supportActionBar?.title = "My Orders"
-        myOrderRecycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.myOrderRecycler.layoutManager = LinearLayoutManager(requireContext())
         loadOrders()
     }
 
@@ -50,6 +59,8 @@ class MyOrdersFragment : Fragment(), CellClickListener, CartItemBuy {
             .collection("orders")
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
+                if (_binding == null) return@addSnapshotListener
+                
                 if (error != null) {
                     showEmpty(error.message ?: "Unable to load orders")
                     return@addSnapshotListener
@@ -59,18 +70,19 @@ class MyOrdersFragment : Fragment(), CellClickListener, CartItemBuy {
                 if (orders.isEmpty()) {
                     showEmpty("No orders yet. Add a product and place a demo order.")
                 } else {
-                    emptyOrdersText.visibility = View.GONE
-                    myOrderRecycler.visibility = View.VISIBLE
-                    myOrderRecycler.adapter =
+                    binding.emptyOrdersText.visibility = View.GONE
+                    binding.myOrderRecycler.visibility = View.VISIBLE
+                    binding.myOrderRecycler.adapter =
                         MyOrdersAdapter(this, orders, this@MyOrdersFragment, this@MyOrdersFragment)
                 }
             }
     }
 
     private fun showEmpty(message: String) {
-        emptyOrdersText.text = message
-        emptyOrdersText.visibility = View.VISIBLE
-        myOrderRecycler.visibility = View.GONE
+        if (_binding == null) return
+        binding.emptyOrdersText.text = message
+        binding.emptyOrdersText.visibility = View.VISIBLE
+        binding.myOrderRecycler.visibility = View.GONE
     }
 
     override fun onCellClickListener(name: String) {
